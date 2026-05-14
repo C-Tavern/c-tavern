@@ -6,7 +6,7 @@
 
 Clavo is an innovative **AI Companion platform** designed to provide warm, personalized, and seamless emotional companionship. Whether you're looking for an **AI girlfriend/boyfriend**, a custom **TavernAI roleplay AI**, or a smart **Telegram/WhatsApp/WeChat AI chatbot**, Clavo lives right where you already chat. 
 
-[English](./README.md) | [简体中文](./README.zh-CN.md)
+[English](./) | [简体中文](./README.zh-CN)
 
 ## ✨ Core Features & Integration
 
@@ -32,3 +32,5 @@ Getting started with your new **WeChat/Telegram/WhatsApp AI bot** is incredibly 
 4.  **Start Chatting**: Open your messenger and say hi to your new AI companion!
 
 > 💡 **Tip**: Use invite code **`CLAVO`** during registration to unlock more bonuses!
+> 
+> 🌐 **Visit our official website**: [https://clavo.chat](https://clavo.chat)

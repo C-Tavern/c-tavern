@@ -1,3 +1,9 @@
+---
+layout: default
+title: Clavo - 你的专属 AI 情感伴侣 | 微信、Telegram、WhatsApp 跨平台酒馆 (TavernAI) 角色扮演机器人
+description: Clavo 致力于提供有温度的 AI 情感陪伴。无论你是在寻找虚拟女友、二次元角色扮演 AI，还是直接在通讯软件里运行的 AI 酒馆，Clavo 都能满足你。支持微信、Telegram、WhatsApp 接入。
+---
+
 <!-- SEO Topics: ai伴侣, 虚拟女友, 情感陪伴ai, 微信ai机器人, telegram机器人, whatsapp机器人, 角色扮演ai, ai分身, character-ai平替, 酒馆, tavernai, sillytavern -->
 
 # 🤖 Clavo - 你的专属 AI 情感伴侣 | 微信、Telegram、WhatsApp 跨平台酒馆 (TavernAI) 角色扮演机器人
@@ -6,7 +12,7 @@
 
 Clavo 致力于提供有温度的 **AI 情感陪伴**。无论你是在寻找一个 **虚拟女友/男友**、**二次元角色扮演 AI (Roleplay)**，还是一个能直接在通讯软件里运行的 **AI 酒馆 (TavernAI/SillyTavern)**，Clavo 都能打破传统 APP 的限制。作为一款强大的 **微信 AI 机器人**、**Telegram 机器人** 和 **WhatsApp 聊天机器人**，它能直接入驻你最常用的通讯软件，实现像真人一样自然的随时交互。
 
-[English](./README.md) | [简体中文](./README.zh-CN.md)
+[English](./) | [简体中文](./README.zh-CN)
 
 ## ✨ 核心特性 (Features)
 
@@ -32,3 +38,5 @@ Clavo 致力于提供有温度的 **AI 情感陪伴**。无论你是在寻找一
 4.  **开始聊天**：打开你的聊天软件，和你的新伴侣打个招呼吧！
 
 > 💡 **Tip**：注册时填写邀请码 **`CLAVO`**，即可解锁更多福利！
+> 
+> 🌐 **访问官方网站**：[https://clavo.chat](https://clavo.chat)

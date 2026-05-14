@@ -1,0 +1,13 @@
+# GitHub Pages Jekyll Theme Configuration
+theme: jekyll-theme-cayman
+
+# SEO & Meta Data
+title: Clavo - AI Companion & TavernAI Roleplay Bot for WeChat, Telegram & WhatsApp
+description: Clavo is your personalized AI Companion and TavernAI roleplay bot across WeChat, Telegram, and WhatsApp. Features long-term memory, proactive care, and full Chara V2 / TavernAI cards support. The perfect Character.AI alternative.
+keywords: ai-companion, virtual-girlfriend, character-ai-alternative, ai-chatbot, telegram-bot, whatsapp-bot, wechat-bot, roleplay-ai, tavernai, sillytavern
+url: "https://clavo.chat" # Your main website URL
+author: Clavo Team
+social:
+  name: Clavo
+  links:
+    - https://clavo.chat
