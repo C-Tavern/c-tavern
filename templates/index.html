@@ -2,8 +2,31 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SANF🔞RA — لوحة التحكم</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>SANFFOURA — لوحة التحكم</title>
+
+  <!-- PWA -->
+  <link rel="manifest" href="/static/manifest.json">
+  <meta name="theme-color" content="#c026d3">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="SANFFOURA">
+  <meta name="application-name" content="SANFFOURA">
+  <meta name="msapplication-TileColor" content="#07000f">
+  <meta name="msapplication-TileImage" content="/static/icons/icon-144x144.png">
+
+  <!-- Icons -->
+  <link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/static/icons/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/static/icons/icon-192x192.png">
+
+  <!-- SEO / Open Graph -->
+  <meta name="description" content="SANFFOURA — رفيقتك الذكية. محادثة، صور، وصوت في مكان واحد.">
+  <meta property="og:title" content="SANFFOURA">
+  <meta property="og:description" content="رفيقتك الذكية على مدار الساعة">
+  <meta property="og:image" content="https://i.postimg.cc/XNBtYC10/file-0000000084487246995745f704ea604f.png">
+  <meta name="twitter:card" content="summary_large_image">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -351,9 +374,35 @@
   </div>
 
   <footer>
-    <p>SANF🔞RA - 💭!! — رفيقتك الذكية على مدار الساعة</p>
+    <p>SANFFOURA - 💭!! — رفيقتك الذكية على مدار الساعة</p>
   </footer>
   <div class="toast" id="toast"></div>
+
+  <!-- PWA Install Banner -->
+  <div id="pwa-install-banner" style="
+    display:none; position:fixed; bottom:24px; left:50%; transform:translateX(-50%);
+    z-index:9999; background:rgba(12,2,22,0.97); border:1px solid rgba(192,38,211,0.55);
+    border-radius:18px; padding:14px 20px; gap:14px; align-items:center;
+    box-shadow:0 8px 40px rgba(192,38,211,0.35); backdrop-filter:blur(20px);
+    max-width:420px; width:calc(100% - 32px);">
+    <img src="/static/icons/icon-72x72.png" width="42" height="42"
+         style="border-radius:10px;flex-shrink:0" alt="icon">
+    <div style="flex:1;min-width:0">
+      <div style="font-weight:800;font-size:.93rem;color:#f0abfc">تثبيت SANFFOURA</div>
+      <div style="font-size:.76rem;color:rgba(240,230,255,.55);margin-top:2px">
+        أضف التطبيق إلى شاشتك الرئيسية للوصول الفوري
+      </div>
+    </div>
+    <button id="pwa-install-btn" style="
+      background:linear-gradient(135deg,#86198f,#c026d3);color:#fff;
+      border:none;border-radius:10px;padding:8px 16px;font-weight:700;
+      font-size:.83rem;cursor:pointer;white-space:nowrap;font-family:inherit;">
+      📲 تثبيت
+    </button>
+    <button id="pwa-install-dismiss" style="
+      background:transparent;border:none;color:rgba(240,230,255,.4);
+      font-size:1.1rem;cursor:pointer;padding:4px;line-height:1;flex-shrink:0;">✕</button>
+  </div>
 
   <script>
     const PLAT_LABELS = { telegram:'تيليغرام', whatsapp:'واتساب', web:'ويب' };
@@ -619,6 +668,50 @@
     loadStatus(); checkWAStatus(); loadMemoryStats(); loadPersonas();
     setInterval(checkWAStatus,   15000);
     setInterval(loadMemoryStats,  30000);
+
+    /* ── PWA: Service Worker Registration ── */
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js', { scope: '/' })
+          .then(reg => console.log('[PWA] SW registered, scope:', reg.scope))
+          .catch(err => console.warn('[PWA] SW registration failed:', err));
+      });
+    }
+
+    /* ── PWA: Install Prompt ── */
+    let _deferredPrompt = null;
+    const installBanner = document.getElementById('pwa-install-banner');
+    const installBtn    = document.getElementById('pwa-install-btn');
+    const installDismiss= document.getElementById('pwa-install-dismiss');
+
+    window.addEventListener('beforeinstallprompt', e => {
+      e.preventDefault();
+      _deferredPrompt = e;
+      if (installBanner) installBanner.style.display = 'flex';
+    });
+
+    if (installBtn) {
+      installBtn.addEventListener('click', async () => {
+        if (!_deferredPrompt) return;
+        _deferredPrompt.prompt();
+        const { outcome } = await _deferredPrompt.userChoice;
+        console.log('[PWA] Install outcome:', outcome);
+        _deferredPrompt = null;
+        installBanner.style.display = 'none';
+      });
+    }
+
+    if (installDismiss) {
+      installDismiss.addEventListener('click', () => {
+        installBanner.style.display = 'none';
+      });
+    }
+
+    window.addEventListener('appinstalled', () => {
+      showToast('✅ تم تثبيت SANFFOURA على جهازك!');
+      if (installBanner) installBanner.style.display = 'none';
+      _deferredPrompt = null;
+    });
   </script>
 </body>
 </html>

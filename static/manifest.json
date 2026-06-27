@@ -1,0 +1,96 @@
+{
+  "name": "SANFFOURA - رفيقتك الذكية",
+  "short_name": "SANFFOURA",
+  "description": "رفيقتك الذكية — محادثة، صور، وصوت في مكان واحد",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#07000f",
+  "theme_color": "#c026d3",
+  "lang": "ar",
+  "dir": "rtl",
+  "categories": ["productivity", "entertainment", "social"],
+  "icons": [
+    {
+      "src": "/static/icons/icon-72x72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/icons/icon-96x96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/icons/icon-128x128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/icons/icon-144x144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/icons/icon-152x152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/icons/icon-384x384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/icons/icon-maskable-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "https://i.postimg.cc/XNBtYC10/file-0000000084487246995745f704ea604f.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "SANFFOURA لوحة التحكم"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "محادثة جديدة",
+      "short_name": "محادثة",
+      "description": "ابدأ محادثة جديدة مع سنفرا",
+      "url": "/?action=chat",
+      "icons": [{ "src": "/static/icons/icon-96x96.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "توليد صورة",
+      "short_name": "صورة",
+      "description": "ولّد صورة مجاناً",
+      "url": "/?action=image",
+      "icons": [{ "src": "/static/icons/icon-96x96.png", "sizes": "96x96" }]
+    }
+  ],
+  "prefer_related_applications": false
+}

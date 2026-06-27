@@ -9,7 +9,8 @@ import threading
 import signal
 import sys
 from datetime import timedelta
-from flask import Flask, request, jsonify, render_template, redirect, url_for, session, send_file
+import os as _os
+from flask import Flask, request, jsonify, render_template, redirect, url_for, session, send_file, Response
 
 from utils.config import validate_config, config_summary, SECRET_KEY, BOT_NAME, DASHBOARD_BG_URL
 from utils.auth import require_auth, login, logout, is_authenticated
@@ -40,6 +41,31 @@ app.register_blueprint(get_whatsapp_blueprint())
 _github_observer = None
 _telegram_thread = None
 PLATFORM = "web"
+
+
+@app.route("/sw.js")
+def service_worker():
+    """Serve the service worker from the root scope so it can control all pages."""
+    sw_path = _os.path.join(app.static_folder, "sw.js")
+    with open(sw_path, "r", encoding="utf-8") as f:
+        content = f.read()
+    return Response(
+        content,
+        mimetype="application/javascript",
+        headers={
+            "Service-Worker-Allowed": "/",
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+        },
+    )
+
+
+@app.route("/manifest.json")
+def manifest():
+    """Serve manifest from root for maximum browser compatibility."""
+    return send_file(
+        _os.path.join(app.static_folder, "manifest.json"),
+        mimetype="application/manifest+json",
+    )
 
 
 @app.route("/login", methods=["GET", "POST"])
