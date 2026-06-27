@@ -15,8 +15,9 @@ from utils.config import TELEGRAM_TOKEN
 from db.memory import get_history, save_message, clear_history, get_user_summary
 from db.personas import (
     list_personas, get_active_persona, set_active_persona,
-    create_persona, delete_persona, upsert_profile,
+    create_persona, delete_persona,
 )
+from db.memory import upsert_profile
 
 logger = logging.getLogger(__name__)
 PLATFORM = "telegram"
@@ -26,7 +27,6 @@ async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user = update.effective_user
     name = user.first_name if user else "صديقي"
     if user:
-        from db.memory import upsert_profile
         upsert_profile(PLATFORM, str(user.id), user.first_name or "")
     await update.message.reply_text(
         f"👋 مرحباً {name}! أنا كلافو، رفيقك الذكي.\n\n"
@@ -234,7 +234,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     save_message(PLATFORM, user_id, "user", user_text)
     save_message(PLATFORM, user_id, "assistant", reply)
     if display_name:
-        from db.memory import upsert_profile
         upsert_profile(PLATFORM, user_id, display_name)
 
     await update.message.reply_text(reply)
