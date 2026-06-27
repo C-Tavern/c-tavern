@@ -44,3 +44,6 @@ run = ["gunicorn", "--bind", "0.0.0.0:5000", "main:app"]
 [userenv.shared]
 OLLAMA_API_URL = "https://ollama.com"
 MODEL_NAME = "llama3"
+VAPID_PUBLIC_KEY = "BOqKuuaUt0QR4e2zTrNlL2SI8RTEunkm2XU6xUYDa0_KQJYCYDuQ--jSd0TBobITFRtwbj2mvUxQIqHLXJFXwgw"
+VAPID_PRIVATE_KEY = "udqjaxH5BsSeF1lsEbjXQ9HapDnjYUEj0ROcib_nYvk"
+VAPID_SUBJECT = "mailto:sanfra-bot@users.noreply.github.com"

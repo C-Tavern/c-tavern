@@ -66,8 +66,89 @@ def init_db() -> None:
                 msg_count   INTEGER NOT NULL DEFAULT 0,
                 PRIMARY KEY (platform, user_id)
             );
+
+            CREATE TABLE IF NOT EXISTS push_subscriptions (
+                id                INTEGER PRIMARY KEY AUTOINCREMENT,
+                session_id        TEXT    NOT NULL UNIQUE,
+                endpoint          TEXT    NOT NULL,
+                p256dh            TEXT    NOT NULL,
+                auth              TEXT    NOT NULL,
+                user_agent        TEXT,
+                subscribed_at     TEXT    NOT NULL DEFAULT (datetime('now')),
+                last_notified_at  TEXT
+            );
         """)
     logger.info("✅ قاعدة بيانات الذاكرة جاهزة: %s", DB_PATH)
+
+
+# ── Push Subscription CRUD ─────────────────────────────────────────────────
+
+def save_push_subscription(session_id: str, endpoint: str,
+                            p256dh: str, auth: str,
+                            user_agent: str = "") -> bool:
+    try:
+        with _cursor() as cur:
+            cur.execute("""
+                INSERT INTO push_subscriptions
+                    (session_id, endpoint, p256dh, auth, user_agent)
+                VALUES (?, ?, ?, ?, ?)
+                ON CONFLICT(session_id) DO UPDATE SET
+                    endpoint   = excluded.endpoint,
+                    p256dh     = excluded.p256dh,
+                    auth       = excluded.auth,
+                    user_agent = excluded.user_agent
+            """, (session_id, endpoint, p256dh, auth, user_agent))
+        logger.info("✅ تم حفظ اشتراك Push — session: %s", session_id[:12])
+        return True
+    except Exception as e:
+        logger.error("خطأ في حفظ الاشتراك: %s", e)
+        return False
+
+
+def delete_push_subscription(session_id: str) -> bool:
+    with _cursor() as cur:
+        cur.execute("DELETE FROM push_subscriptions WHERE session_id = ?", (session_id,))
+    return True
+
+
+def delete_push_subscription_by_endpoint(endpoint: str) -> None:
+    with _cursor() as cur:
+        cur.execute("DELETE FROM push_subscriptions WHERE endpoint = ?", (endpoint,))
+
+
+def get_all_push_subscriptions() -> list:
+    with _cursor() as cur:
+        cur.execute("""
+            SELECT id, session_id, endpoint, p256dh, auth
+            FROM push_subscriptions
+            ORDER BY subscribed_at DESC
+        """)
+        rows = cur.fetchall()
+    result = []
+    for row in rows:
+        result.append({
+            "id":         row["id"],
+            "session_id": row["session_id"],
+            "subscription_info": {
+                "endpoint": row["endpoint"],
+                "keys": {"p256dh": row["p256dh"], "auth": row["auth"]},
+            },
+        })
+    return result
+
+
+def get_push_subscription_count() -> int:
+    with _cursor() as cur:
+        cur.execute("SELECT COUNT(*) FROM push_subscriptions")
+        return cur.fetchone()[0]
+
+
+def mark_push_notified(session_id: str) -> None:
+    with _cursor() as cur:
+        cur.execute("""
+            UPDATE push_subscriptions SET last_notified_at = datetime('now')
+            WHERE session_id = ?
+        """, (session_id,))
 
 
 def upsert_profile(platform: str, user_id: str, display_name: str = "") -> None:

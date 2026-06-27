@@ -17,10 +17,16 @@ from utils.auth import require_auth, login, logout, is_authenticated
 from ai.llm_router import ask_llm
 from ai.image_gen import get_image_url
 from ai.tts import text_to_speech, list_voices
+from utils.push import send_push, broadcast_push, is_push_enabled, VAPID_PUBLIC_KEY
 from bots.telegram_bot import build_telegram_app
 from bots.whatsapp_bot import get_whatsapp_blueprint
 from sync_github import start_sync_watcher, stop_sync_watcher
-from db.memory import init_db, get_history, save_message, clear_history, get_stats
+from db.memory import (
+    init_db, get_history, save_message, clear_history, get_stats,
+    save_push_subscription, delete_push_subscription,
+    delete_push_subscription_by_endpoint, get_all_push_subscriptions,
+    get_push_subscription_count, mark_push_notified,
+)
 from db.personas import (
     init_personas, list_personas, get_active_persona,
     set_active_persona, create_persona, delete_persona,
@@ -221,6 +227,97 @@ def api_tts():
 @require_auth
 def api_tts_voices():
     return jsonify(list_voices())
+
+
+# ── Push Notification Routes ──────────────────────────────────────────────────
+
+@app.route("/api/push/vapid-public-key", methods=["GET"])
+@require_auth
+def api_push_vapid_key():
+    if not is_push_enabled():
+        return jsonify({"خطأ": "Push غير مُفعَّل — VAPID_PUBLIC_KEY مطلوب."}), 503
+    return jsonify({"publicKey": VAPID_PUBLIC_KEY})
+
+
+@app.route("/api/push/subscribe", methods=["POST"])
+@require_auth
+def api_push_subscribe():
+    data = request.get_json(silent=True) or {}
+    sub  = data.get("subscription", {})
+    endpoint = sub.get("endpoint", "")
+    keys     = sub.get("keys", {})
+    p256dh   = keys.get("p256dh", "")
+    auth     = keys.get("auth", "")
+    if not endpoint or not p256dh or not auth:
+        return jsonify({"خطأ": "بيانات الاشتراك غير مكتملة."}), 400
+    sess_id = session.get("web_session", "web-default")
+    ua      = request.headers.get("User-Agent", "")[:200]
+    ok = save_push_subscription(sess_id, endpoint, p256dh, auth, ua)
+    if not ok:
+        return jsonify({"خطأ": "فشل حفظ الاشتراك."}), 500
+    count = get_push_subscription_count()
+    return jsonify({"حالة": "تم الاشتراك", "إجمالي_المشتركين": count}), 201
+
+
+@app.route("/api/push/unsubscribe", methods=["POST"])
+@require_auth
+def api_push_unsubscribe():
+    sess_id = session.get("web_session", "web-default")
+    delete_push_subscription(sess_id)
+    return jsonify({"حالة": "تم إلغاء الاشتراك"})
+
+
+@app.route("/api/push/send", methods=["POST"])
+@require_auth
+def api_push_send():
+    """Admin endpoint: broadcast a push to all or a single session."""
+    if not is_push_enabled():
+        return jsonify({"خطأ": "Push غير مُفعَّل — VAPID keys مطلوبة."}), 503
+    data    = request.get_json(silent=True) or {}
+    title   = data.get("title",   "SANFFOURA 🔞")
+    body    = data.get("body",    "💋 لديك رسالة جديدة")
+    url     = data.get("url",     "/")
+    icon    = data.get("icon",    "/static/icons/icon-192x192.png")
+    target  = data.get("session_id")          # optional — single target
+
+    subs = get_all_push_subscriptions()
+    if not subs:
+        return jsonify({"خطأ": "لا يوجد مشتركون."}), 404
+
+    if target:
+        subs = [s for s in subs if s["session_id"] == target]
+        if not subs:
+            return jsonify({"خطأ": "المشترك غير موجود."}), 404
+
+    sent = failed = 0
+    expired_endpoints = []
+    for sub in subs:
+        ok = send_push(sub["subscription_info"], title, body, icon, url)
+        if ok:
+            sent += 1
+            mark_push_notified(sub["session_id"])
+        else:
+            failed += 1
+            expired_endpoints.append(sub["subscription_info"]["endpoint"])
+
+    for ep in expired_endpoints:
+        delete_push_subscription_by_endpoint(ep)
+
+    return jsonify({
+        "حالة":         "تم الإرسال",
+        "مُرسَل":       sent,
+        "فاشل":         failed,
+        "منتهي_الصلاحية": len(expired_endpoints),
+    })
+
+
+@app.route("/api/push/status", methods=["GET"])
+@require_auth
+def api_push_status():
+    return jsonify({
+        "مُفعَّل":         is_push_enabled(),
+        "إجمالي_المشتركين": get_push_subscription_count(),
+    })
 
 
 def run_telegram_bot():
