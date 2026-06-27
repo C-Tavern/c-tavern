@@ -44,3 +44,4 @@ run = ["python", "main.py"]
 [userenv.shared]
 OLLAMA_API_URL = "https://ollama.com"
 MODEL_NAME = "llama3"
+GITHUB_REPO = "C-Tavern/c-tavern"
