@@ -3,174 +3,187 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#8b5cf6">
   <title>SANFFOURA — تسجيل الدخول</title>
-
-  <!-- PWA -->
   <link rel="manifest" href="/static/manifest.json">
-  <meta name="theme-color" content="#c026d3">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="SANFFOURA">
-
-  <!-- Icons -->
   <link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="32x32" href="/static/icons/favicon-32x32.png">
-  <link rel="icon" type="image/png" sizes="192x192" href="/static/icons/icon-192x192.png">
+  <link rel="stylesheet" href="/static/styles.css">
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    @keyframes bgPulse {
-      0%   { transform: scale(1.0);   filter: brightness(0.35) saturate(1.4); }
-      50%  { transform: scale(1.08);  filter: brightness(0.42) saturate(1.8); }
-      100% { transform: scale(1.0);   filter: brightness(0.35) saturate(1.4); }
-    }
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(30px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes glowPulse {
-      0%, 100% { box-shadow: 0 0 20px rgba(192, 38, 211, 0.4), 0 0 60px rgba(192, 38, 211, 0.15); }
-      50%       { box-shadow: 0 0 40px rgba(192, 38, 211, 0.8), 0 0 100px rgba(192, 38, 211, 0.3); }
-    }
-    @keyframes shimmer {
-      0%   { background-position: -200% center; }
-      100% { background-position:  200% center; }
-    }
-
     body {
-      font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
-      min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
-      color: #f0e6ff;
-      direction: rtl;
-      overflow: hidden;
-      position: relative;
+      min-height: 100vh;
+      padding: 1rem;
     }
 
-    .bg-layer {
-      position: fixed; inset: 0; z-index: 0;
-      background-image: url('https://i.postimg.cc/XNBtYC10/file-0000000084487246995745f704ea604f.png');
-      background-size: cover;
-      background-position: center;
-      animation: bgPulse 8s ease-in-out infinite;
-    }
-    .bg-overlay {
-      position: fixed; inset: 0; z-index: 1;
-      background: radial-gradient(ellipse at 50% 0%, rgba(192,38,211,0.18) 0%, transparent 70%),
-                  linear-gradient(180deg, rgba(10,0,20,0.7) 0%, rgba(5,0,15,0.85) 100%);
+    .login-wrapper {
+      width: 100%;
+      max-width: 450px;
+      animation: slideInUp 0.6s ease-out;
     }
 
     .login-card {
-      position: relative; z-index: 10;
-      background: rgba(20, 5, 35, 0.75);
-      border: 1px solid rgba(192, 38, 211, 0.4);
+      background: rgba(20, 28, 50, 0.5);
+      border: 1px solid rgba(139, 92, 246, 0.2);
       border-radius: 24px;
-      padding: 52px 44px;
-      width: 100%;
-      max-width: 420px;
-      backdrop-filter: blur(24px);
-      animation: fadeUp 0.8s ease forwards, glowPulse 4s ease-in-out infinite;
+      padding: 3rem 2rem;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 20px 64px rgba(0, 0, 0, 0.5), 0 0 40px rgba(139, 92, 246, 0.2);
+      animation: fadeInUp 0.8s ease-out;
     }
 
-    .logo {
-      font-size: 2rem;
-      font-weight: 900;
+    .login-header {
       text-align: center;
-      margin-bottom: 4px;
-      background: linear-gradient(135deg, #f0abfc, #e879f9, #c026d3, #a21caf);
+      margin-bottom: 2rem;
+    }
+
+    .login-logo {
+      font-size: 2.5rem;
+      font-weight: 900;
+      letter-spacing: 0.05em;
+      background: linear-gradient(135deg, #a78bfa, #ec4899, #8b5cf6);
       background-size: 200% auto;
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
       animation: shimmer 3s linear infinite;
-    }
-    .subtitle {
-      text-align: center;
-      color: rgba(240,230,255,0.55);
-      font-size: 0.88rem;
-      margin-bottom: 38px;
-      letter-spacing: 0.02em;
+      margin-bottom: 0.5rem;
     }
 
-    label {
-      display: block;
-      font-size: 0.82rem;
-      color: rgba(240,230,255,0.6);
-      margin-bottom: 6px;
-      font-weight: 600;
+    .login-title {
+      font-size: 0.95rem;
+      color: rgba(148, 163, 184, 0.9);
+      letter-spacing: 0.03em;
+    }
+
+    .login-form {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .form-field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .form-field label {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: rgb(203, 213, 225);
+      text-transform: uppercase;
       letter-spacing: 0.04em;
     }
-    input {
+
+    .form-field input {
       width: 100%;
-      padding: 13px 18px;
-      border-radius: 12px;
-      border: 1px solid rgba(192, 38, 211, 0.3);
-      background: rgba(192, 38, 211, 0.07);
-      color: #f0e6ff;
+      padding: 1rem;
+      border-radius: 14px;
+      border: 1px solid rgba(139, 92, 246, 0.2);
+      background: rgba(139, 92, 246, 0.05);
+      color: rgb(248, 250, 252);
       font-size: 0.95rem;
-      outline: none;
-      margin-bottom: 22px;
       font-family: inherit;
-      transition: border-color 0.25s, box-shadow 0.25s;
+      outline: none;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    input:focus {
-      border-color: #c026d3;
-      box-shadow: 0 0 0 3px rgba(192, 38, 211, 0.2);
+
+    .form-field input:focus {
+      border-color: rgba(139, 92, 246, 0.5);
+      background: rgba(139, 92, 246, 0.1);
+      box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.1), 0 0 20px rgba(139, 92, 246, 0.2);
     }
-    input::placeholder { color: rgba(240,230,255,0.3); }
+
+    .form-field input::placeholder {
+      color: rgba(148, 163, 184, 0.5);
+    }
 
     .btn-login {
       width: 100%;
-      padding: 15px;
-      background: linear-gradient(135deg, #a21caf, #c026d3, #86198f);
-      background-size: 200% auto;
+      padding: 1rem;
+      background: linear-gradient(135deg, #8b5cf6, #6d28d9);
       color: white;
       border: none;
-      border-radius: 12px;
-      font-size: 1.05rem;
+      border-radius: 14px;
+      font-size: 1rem;
       font-weight: 700;
       cursor: pointer;
-      transition: transform 0.15s, box-shadow 0.2s, background-position 0.4s;
-      font-family: inherit;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       letter-spacing: 0.03em;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 8px 24px rgba(139, 92, 246, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1);
     }
+
+    .btn-login::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.1) 50%, transparent 70%);
+      transform: translateX(-100%);
+      transition: transform 0.6s;
+    }
+
     .btn-login:hover {
-      background-position: right center;
+      box-shadow: 0 12px 32px rgba(139, 92, 246, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.15);
       transform: translateY(-2px);
-      box-shadow: 0 8px 30px rgba(192, 38, 211, 0.55);
     }
-    .btn-login:active { transform: translateY(0); }
+
+    .btn-login:hover::before {
+      transform: translateX(100%);
+    }
+
+    .btn-login:active {
+      transform: translateY(0);
+    }
+
+    .btn-login:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
 
     .error-msg {
-      background: rgba(239, 68, 68, 0.12);
-      border: 1px solid rgba(239, 68, 68, 0.35);
-      color: #fca5a5;
-      padding: 13px 16px;
-      border-radius: 10px;
-      margin-bottom: 22px;
-      font-size: 0.875rem;
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: rgb(252, 165, 165);
+      padding: 1rem;
+      border-radius: 12px;
+      font-size: 0.9rem;
       text-align: center;
+      animation: slideInDown 0.3s ease-out;
     }
 
-    .particles {
-      position: fixed; inset: 0; z-index: 2; pointer-events: none;
-      overflow: hidden;
+    @keyframes slideInDown {
+      from { transform: translateY(-20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
     }
-    .particle {
-      position: absolute;
-      width: 3px; height: 3px;
-      border-radius: 50%;
-      background: rgba(240, 171, 252, 0.6);
-      animation: floatUp linear infinite;
+
+    .login-footer {
+      text-align: center;
+      margin-top: 2rem;
+      padding-top: 2rem;
+      border-top: 1px solid rgba(139, 92, 246, 0.1);
+      font-size: 0.8rem;
+      color: rgba(148, 163, 184, 0.7);
     }
-    @keyframes floatUp {
-      0%   { transform: translateY(100vh) scale(0); opacity: 0; }
-      10%  { opacity: 1; }
-      90%  { opacity: 0.6; }
-      100% { transform: translateY(-10vh) scale(1); opacity: 0; }
+
+    @media (max-width: 480px) {
+      .login-card {
+        padding: 2rem 1.5rem;
+      }
+
+      .login-logo {
+        font-size: 2rem;
+      }
+
+      .btn-login {
+        padding: 0.875rem;
+        font-size: 0.95rem;
+      }
     }
   </style>
 </head>
@@ -178,31 +191,54 @@
   <div class="bg-layer"></div>
   <div class="bg-overlay"></div>
 
-  <div class="particles" id="particles"></div>
+  <div class="login-wrapper">
+    <div class="login-card">
+      <div class="login-header">
+        <div class="login-logo">SANF🔞RA</div>
+        <div class="login-title">💭!! — لوحة التحكم</div>
+      </div>
 
-  <div class="login-card">
-    <div class="logo">SANF🔞RA</div>
-    <div class="subtitle">💭!! لوحة التحكم — سجّلي الدخول</div>
+      {% if error %}
+      <div class="error-msg">{{ error }}</div>
+      {% endif %}
 
-    {% if error %}
-    <div class="error-msg">{{ error }}</div>
-    {% endif %}
+      <form method="POST" action="/login" class="login-form">
+        <div class="form-field">
+          <label for="username">اسم المستخدم</label>
+          <input 
+            type="text" 
+            id="username" 
+            name="username"
+            placeholder="أدخل اسم المستخدم" 
+            required 
+            autocomplete="username"
+            autofocus
+          >
+        </div>
 
-    <form method="POST" action="/login">
-      <label for="username">اسم المستخدم</label>
-      <input type="text" id="username" name="username"
-             placeholder="أدخل اسم المستخدم" required autocomplete="username">
+        <div class="form-field">
+          <label for="password">كلمة المرور</label>
+          <input 
+            type="password" 
+            id="password" 
+            name="password"
+            placeholder="أدخل كلمة المرور" 
+            required 
+            autocomplete="current-password"
+          >
+        </div>
 
-      <label for="password">كلمة المرور</label>
-      <input type="password" id="password" name="password"
-             placeholder="أدخل كلمة المرور" required autocomplete="current-password">
+        <button type="submit" class="btn-login">🔐 تسجيل الدخول</button>
+      </form>
 
-      <button type="submit" class="btn-login">🔐 تسجيل الدخول</button>
-    </form>
+      <div class="login-footer">
+        <p>🔞 SANFFOURA — رفيقتك الذكية على مدار الساعة</p>
+      </div>
+    </div>
   </div>
 
   <script>
-    /* ── PWA: Service Worker Registration ── */
+    /* PWA Service Worker Registration */
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js', { scope: '/' })
@@ -211,21 +247,28 @@
       });
     }
 
-    const container = document.getElementById('particles');
-    for (let i = 0; i < 35; i++) {
-      const p = document.createElement('div');
-      p.className = 'particle';
-      p.style.cssText = `
-        left: ${Math.random() * 100}%;
-        width: ${Math.random() * 4 + 1}px;
-        height: ${Math.random() * 4 + 1}px;
-        animation-duration: ${Math.random() * 12 + 8}s;
-        animation-delay: ${Math.random() * 10}s;
-        opacity: ${Math.random() * 0.7 + 0.2};
-        background: hsl(${Math.random() * 60 + 280}, 80%, 75%);
-      `;
-      container.appendChild(p);
-    }
+    /* Form validation and submission */
+    const form = document.querySelector('.login-form');
+    const submitBtn = form.querySelector('button[type="submit"]');
+
+    form.addEventListener('submit', function(e) {
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value.trim();
+
+      if (!username || !password) {
+        e.preventDefault();
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span class="spinner"></span> جاري التحقق...';
+    });
+
+    /* Auto-focus management */
+    document.addEventListener('DOMContentLoaded', () => {
+      const usernameInput = document.getElementById('username');
+      if (usernameInput) usernameInput.focus();
+    });
   </script>
 </body>
 </html>
