@@ -9,6 +9,9 @@ OLLAMA_API_URL: str = os.getenv("OLLAMA_API_URL", "https://ollama.com")
 MODEL_NAME: str = os.getenv("MODEL_NAME", "llama3")
 GITHUB_TOKEN: str = os.getenv("GITHUB_TOKEN", "")
 GITHUB_REPO: str = os.getenv("GITHUB_REPO", "")
+ADMIN_USERNAME: str = os.getenv("ADMIN_USERNAME", "")
+ADMIN_PASSWORD: str = os.getenv("ADMIN_PASSWORD", "")
+SECRET_KEY: str = os.getenv("SECRET_KEY", os.urandom(32).hex())
 
 REQUIRED_SECRETS = {
     "TELEGRAM_TOKEN": TELEGRAM_TOKEN,
@@ -31,4 +34,5 @@ def config_summary() -> dict:
         "رابط_أولاما": OLLAMA_API_URL,
         "تيليغرام_مُفعّل": bool(TELEGRAM_TOKEN),
         "مزامنة_جيتهاب_مُفعّلة": bool(GITHUB_TOKEN and GITHUB_REPO),
+        "لوحة_التحكم_محمية": bool(ADMIN_USERNAME and ADMIN_PASSWORD),
     }
