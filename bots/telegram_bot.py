@@ -1,60 +1,89 @@
+"""
+SANF🔞RA - 💭!! — Telegram Bot
+Full-featured: personas, image gen, TTS, memory, stats, inline keyboard.
+"""
+
 import logging
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto
 from telegram.ext import (
     ApplicationBuilder,
     CommandHandler,
     MessageHandler,
     CallbackQueryHandler,
     ContextTypes,
+    ConversationHandler,
     filters,
 )
-from ai.ollama_client import ask_ollama
+from ai.llm_router import ask_llm
 from ai.image_gen import generate_image
 from ai.tts import text_to_speech
-from utils.config import TELEGRAM_TOKEN
-from db.memory import get_history, save_message, clear_history, get_user_summary
+from utils.config import TELEGRAM_TOKEN, WELCOME_IMAGE_URL, BOT_NAME
+from db.memory import get_history, save_message, clear_history, get_user_summary, get_stats
 from db.personas import (
     list_personas, get_active_persona, set_active_persona,
-    create_persona, delete_persona,
+    create_persona, delete_persona, get_persona_by_id,
 )
 from db.memory import upsert_profile
 
 logger = logging.getLogger(__name__)
 PLATFORM = "telegram"
 
+NEWPERSONA_NAME, NEWPERSONA_DESC, NEWPERSONA_PROMPT = range(3)
+
+
+def _main_keyboard() -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup([
+        [InlineKeyboardButton("🎭 اختر الشخصية", callback_data="menu:personas")],
+        [
+            InlineKeyboardButton("🎨 ارسم لي صورة", callback_data="menu:image"),
+            InlineKeyboardButton("🗣️ تحويل لصوت",   callback_data="menu:tts"),
+        ],
+        [
+            InlineKeyboardButton("📊 إحصائياتي",        callback_data="menu:stats"),
+            InlineKeyboardButton("❓ المساعدة والشرح", callback_data="menu:help"),
+        ],
+    ])
+
 
 async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user = update.effective_user
-    name = user.first_name if user else "صديقي"
+    name = user.first_name if user else "حبيبي"
     if user:
         upsert_profile(PLATFORM, str(user.id), user.first_name or "")
-    await update.message.reply_text(
-        f"👋 مرحباً {name}! أنا كلافو، رفيقك الذكي.\n\n"
-        "🧠 أتذكر محادثاتنا حتى بعد إعادة التشغيل\n"
-        "🎭 يمكنني تغيير شخصيتي بأمر /personas\n"
-        "🎨 أرسم لك صوراً بأمر /image\n"
-        "🔊 أتكلم بصوت بأمر /tts\n\n"
-        "الأوامر الكاملة: /help"
+
+    caption = (
+        f"أهلين فيك يا {name}... نورتني. 🙈♥️\n\n"
+        "أنا هون كرمالك... دلع، اهتمام، وشوية شقاوة بتخلي كل حكي بيناتنا إلو طعم خاص. 😋♨️\n\n"
+        "اختار الشخصية اللي بتعجبك، أو احكيلي شو ببالك... وأنا رح عيش الدور معك بكل تفاصيله. 💋\n\n"
+        "يلا... لا تخليني ناطرتك، ابعتلي أول رسالة وخلي السهرة تبلش. 🔞!"
     )
+
+    try:
+        await update.message.reply_photo(
+            photo=WELCOME_IMAGE_URL,
+            caption=caption,
+            reply_markup=_main_keyboard(),
+        )
+    except Exception:
+        await update.message.reply_text(caption, reply_markup=_main_keyboard())
 
 
 async def cmd_help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    await update.message.reply_text(
-        "🤖 *أوامر كلافو*\n\n"
+    text = (
+        f"🔞 *{BOT_NAME} — الأوامر*\n\n"
         "*المحادثة:*\n"
         "/start — بدء المحادثة\n"
         "/clear — مسح سجل المحادثة\n"
-        "/memory — إحصائيات ذاكرتنا\n\n"
+        "/stats — إحصائياتي\n\n"
         "*الشخصيات:*\n"
         "/personas — عرض الشخصيات المتاحة\n"
-        "/persona <الاسم> — تغيير الشخصية\n"
-        "/newpersona — إنشاء شخصية جديدة\n\n"
+        "/newpersona — إنشاء شخصية مخصصة\n\n"
         "*الوسائط (مجاناً):*\n"
         "/image <وصف> — توليد صورة\n"
         "/tts <نص> — تحويل نص إلى صوت\n\n"
-        "فقط اكتب رسالتك وسأرد فوراً! ✨",
-        parse_mode="Markdown",
+        "💋 فقط اكتب رسالتك وسأرد فوراً!"
     )
+    await update.message.reply_text(text, parse_mode="Markdown", reply_markup=_main_keyboard())
 
 
 async def cmd_clear(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -65,20 +94,20 @@ async def cmd_clear(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     )
 
 
-async def cmd_memory(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def cmd_stats(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = str(update.effective_user.id)
     summary = get_user_summary(PLATFORM, user_id)
     if not summary:
-        await update.message.reply_text("🧠 لا توجد ذكريات مسجّلة بعد. ابدأ محادثتنا!")
+        await update.message.reply_text("📊 لا توجد إحصائيات بعد. ابدأ محادثتنا!")
         return
     persona = get_active_persona(PLATFORM, user_id)
     await update.message.reply_text(
-        f"🧠 *ذاكرتي عنك*\n\n"
-        f"• الاسم: {summary['الاسم']}\n"
-        f"• عدد رسائلك: {summary['عدد_الرسائل']}\n"
-        f"• أول محادثة: {summary['أول_ظهور']}\n"
-        f"• آخر محادثة: {summary['آخر_ظهور']}\n"
-        f"• شخصيتي الحالية: {persona.get('avatar','🤖')} {persona.get('name','كلافو')}",
+        f"📊 *إحصائياتي معك*\n\n"
+        f"• الاسم: {summary.get('الاسم', '—')}\n"
+        f"• عدد رسائلك: {summary.get('عدد_الرسائل', 0)}\n"
+        f"• أول محادثة: {summary.get('أول_ظهور', '—')}\n"
+        f"• آخر محادثة: {summary.get('آخر_ظهور', '—')}\n"
+        f"• شخصيتي الحالية: {persona.get('avatar', '🔞')} {persona.get('name', BOT_NAME)}",
         parse_mode="Markdown",
     )
 
@@ -94,103 +123,187 @@ async def cmd_personas(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         is_active = p["id"] == active_id
         label = f"{'✅ ' if is_active else ''}{p['avatar']} {p['name']}"
         keyboard.append([InlineKeyboardButton(label, callback_data=f"persona:{p['id']}")])
+    keyboard.append([InlineKeyboardButton("🔙 رجوع", callback_data="menu:back")])
 
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    await update.message.reply_text(
-        f"🎭 *الشخصيات المتاحة*\n\n"
-        f"شخصيتي الحالية: {active.get('avatar','🤖')} *{active.get('name','كلافو')}*\n\n"
-        "اختر شخصية لتفعيلها:",
-        parse_mode="Markdown",
-        reply_markup=reply_markup,
-    )
+    msg = update.message or (update.callback_query.message if update.callback_query else None)
+    if msg:
+        await msg.reply_text(
+            f"🎭 *الشخصيات المتاحة*\n\n"
+            f"الحالية: {active.get('avatar', '🔞')} *{active.get('name', BOT_NAME)}*\n\n"
+            "اختر شخصية لتفعيلها:",
+            parse_mode="Markdown",
+            reply_markup=InlineKeyboardMarkup(keyboard),
+        )
 
 
-async def callback_persona(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
     await query.answer()
+    data = query.data
     user_id = str(query.from_user.id)
-    persona_id = int(query.data.split(":")[1])
-    ok = set_active_persona(PLATFORM, user_id, persona_id)
-    if ok:
-        from db.personas import get_persona_by_id
-        p = get_persona_by_id(persona_id)
-        await query.edit_message_text(
-            f"✅ تم تفعيل شخصية *{p['avatar']} {p['name']}*\n\n"
-            f"_{p['description']}_\n\n"
-            "ابدأ محادثتك الآن! 🚀",
-            parse_mode="Markdown",
-        )
-    else:
-        await query.edit_message_text("❌ لم يتم العثور على الشخصية.")
 
-
-async def cmd_persona(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    if not context.args:
-        await cmd_personas(update, context)
+    if data.startswith("persona:"):
+        persona_id = int(data.split(":")[1])
+        ok = set_active_persona(PLATFORM, user_id, persona_id)
+        if ok:
+            p = get_persona_by_id(persona_id)
+            await query.edit_message_text(
+                f"✅ تم تفعيل *{p['avatar']} {p['name']}*\n\n"
+                f"_{p.get('description', '')}_ \n\n"
+                "ابدأ محادثتك الآن! 💋",
+                parse_mode="Markdown",
+                reply_markup=_main_keyboard(),
+            )
         return
-    name = " ".join(context.args).strip()
-    from db.personas import get_persona_by_name
-    p = get_persona_by_name(name)
-    if not p:
+
+    if data == "menu:personas":
         personas = list_personas()
-        names = ", ".join(f"{x['avatar']} {x['name']}" for x in personas)
-        await update.message.reply_text(
-            f"❌ لم أجد شخصية باسم «{name}».\n\n"
-            f"الشخصيات المتاحة: {names}\n\n"
-            "استخدم /personas لعرض قائمة التفاعلية."
+        active = get_active_persona(PLATFORM, user_id)
+        active_id = active.get("id", -1)
+        keyboard = []
+        for p in personas:
+            is_active = p["id"] == active_id
+            label = f"{'✅ ' if is_active else ''}{p['avatar']} {p['name']}"
+            keyboard.append([InlineKeyboardButton(label, callback_data=f"persona:{p['id']}")])
+        keyboard.append([InlineKeyboardButton("🔙 رجوع", callback_data="menu:back")])
+        await query.edit_message_text(
+            "🎭 *اختر شخصيتك:*",
+            parse_mode="Markdown",
+            reply_markup=InlineKeyboardMarkup(keyboard),
         )
-        return
-    user_id = str(update.effective_user.id)
-    set_active_persona(PLATFORM, user_id, p["id"])
+
+    elif data == "menu:image":
+        await query.edit_message_text(
+            "🎨 أرسل لي وصف الصورة:\n`/image وصف الصورة`\n\nمثال: `/image غروب الشمس على البحر`",
+            parse_mode="Markdown",
+            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 رجوع", callback_data="menu:back")]]),
+        )
+
+    elif data == "menu:tts":
+        await query.edit_message_text(
+            "🗣️ أرسل النص لتحويله لصوت:\n`/tts النص هنا`",
+            parse_mode="Markdown",
+            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 رجوع", callback_data="menu:back")]]),
+        )
+
+    elif data == "menu:stats":
+        summary = get_user_summary(PLATFORM, user_id)
+        persona = get_active_persona(PLATFORM, user_id)
+        if not summary:
+            text = "📊 لا توجد إحصائيات بعد. ابدأ محادثتنا!"
+        else:
+            text = (
+                f"📊 *إحصائياتي معك*\n\n"
+                f"• الاسم: {summary.get('الاسم', '—')}\n"
+                f"• عدد رسائلك: {summary.get('عدد_الرسائل', 0)}\n"
+                f"• آخر محادثة: {summary.get('آخر_ظهور', '—')}\n"
+                f"• الشخصية: {persona.get('avatar', '🔞')} {persona.get('name', BOT_NAME)}"
+            )
+        await query.edit_message_text(
+            text, parse_mode="Markdown",
+            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 رجوع", callback_data="menu:back")]]),
+        )
+
+    elif data == "menu:help":
+        text = (
+            f"❓ *المساعدة*\n\n"
+            "/start — رسالة الترحيب\n"
+            "/personas — اختيار الشخصية\n"
+            "/newpersona — إنشاء شخصية مخصصة\n"
+            "/image <وصف> — توليد صورة مجاناً\n"
+            "/tts <نص> — تحويل لصوت\n"
+            "/stats — إحصائياتي\n"
+            "/clear — مسح المحادثة\n\n"
+            "💋 أو اكتب أي رسالة وسأرد فوراً!"
+        )
+        await query.edit_message_text(
+            text, parse_mode="Markdown",
+            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 رجوع", callback_data="menu:back")]]),
+        )
+
+    elif data == "menu:back":
+        caption = f"أهلين مرة ثانية! 🙈♥️\nشو بتحب تعمل؟"
+        try:
+            await query.edit_message_text(caption, reply_markup=_main_keyboard())
+        except Exception:
+            pass
+
+    elif data.startswith("delpersona:"):
+        persona_id = int(data.split(":")[1])
+        ok = delete_persona(persona_id, requested_by=f"telegram:{user_id}")
+        if ok:
+            await query.answer("🗑️ تم حذف الشخصية")
+        else:
+            await query.answer("❌ لا يمكن حذف هذه الشخصية")
+
+
+async def cmd_newpersona(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     await update.message.reply_text(
-        f"✅ تم التبديل إلى {p['avatar']} *{p['name']}*\n_{p['description']}_",
+        "🎭 *إنشاء شخصية جديدة*\n\n"
+        "الخطوة 1/3: أرسل *اسم* الشخصية الجديدة:\n"
+        "(أو /cancel للإلغاء)",
         parse_mode="Markdown",
     )
+    return NEWPERSONA_NAME
 
 
-async def cmd_newpersona(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    if not context.args:
-        await update.message.reply_text(
-            "🎭 *إنشاء شخصية جديدة*\n\n"
-            "الصيغة:\n"
-            "`/newpersona الاسم | الوصف | تعليمات الشخصية`\n\n"
-            "مثال:\n"
-            "`/newpersona الطبيب | طبيب خبير ومتفهم | أنت طبيب ذو خبرة واسعة تُجيب بدقة علمية وبأسلوب إنساني.`",
-            parse_mode="Markdown",
-        )
-        return
-    raw = " ".join(context.args)
-    parts = [p.strip() for p in raw.split("|")]
-    if len(parts) < 3:
-        await update.message.reply_text(
-            "❌ الصيغة غير صحيحة. يجب فصل الأجزاء الثلاثة بـ `|`\n"
-            "مثال: `/newpersona الاسم | الوصف | التعليمات`",
-            parse_mode="Markdown",
-        )
-        return
-    name, description, prompt = parts[0], parts[1], parts[2]
+async def newpersona_name(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    context.user_data["np_name"] = update.message.text.strip()
+    await update.message.reply_text(
+        f"✅ الاسم: *{context.user_data['np_name']}*\n\n"
+        "الخطوة 2/3: أرسل *وصفاً مختصراً* للشخصية:\n"
+        "(أو /cancel للإلغاء)",
+        parse_mode="Markdown",
+    )
+    return NEWPERSONA_DESC
+
+
+async def newpersona_desc(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    context.user_data["np_desc"] = update.message.text.strip()
+    await update.message.reply_text(
+        "الخطوة 3/3: أرسل *تعليمات الشخصية* (System Prompt):\n\n"
+        "مثال: _أنتِ طبيبة خبيرة ودودة تُجيبين بدقة علمية._\n"
+        "(أو /cancel للإلغاء)",
+        parse_mode="Markdown",
+    )
+    return NEWPERSONA_PROMPT
+
+
+async def newpersona_prompt(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     user_id = str(update.effective_user.id)
-    p = create_persona(name, description, prompt, created_by=f"telegram:{user_id}")
+    name = context.user_data.get("np_name", "")
+    desc = context.user_data.get("np_desc", "")
+    prompt = update.message.text.strip()
+
+    p = create_persona(name, desc, prompt, created_by=f"telegram:{user_id}")
     if not p:
-        await update.message.reply_text(f"❌ اسم الشخصية «{name}» مستخدم بالفعل. اختر اسماً آخر.")
-        return
+        await update.message.reply_text(f"❌ اسم الشخصية «{name}» مستخدم بالفعل. جرّب /newpersona مرة أخرى.")
+        return ConversationHandler.END
+
     set_active_persona(PLATFORM, user_id, p["id"])
     await update.message.reply_text(
-        f"✨ تم إنشاء شخصية *{p['name']}* وتفعيلها!\n\n"
-        f"_{p['description']}_",
+        f"✨ تم إنشاء شخصية *{p['avatar']} {p['name']}* وتفعيلها!\n\n"
+        f"_{p.get('description', '')}_",
         parse_mode="Markdown",
+        reply_markup=_main_keyboard(),
     )
+    return ConversationHandler.END
+
+
+async def newpersona_cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    await update.message.reply_text("❌ تم إلغاء إنشاء الشخصية.", reply_markup=_main_keyboard())
+    return ConversationHandler.END
 
 
 async def cmd_image(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if not context.args:
         await update.message.reply_text(
-            "🎨 أرسل لي وصفاً للصورة:\n`/image غروب الشمس على البحر`",
+            "🎨 أرسل وصف الصورة:\n`/image غروب الشمس على البحر`",
             parse_mode="Markdown",
         )
         return
     prompt = " ".join(context.args)
-    msg = await update.message.reply_text("🎨 جاري توليد الصورة، لحظة...")
+    msg = await update.message.reply_text("🎨 جاري توليد الصورة، لحظة... ✨")
     img_buf = generate_image(prompt)
     if img_buf:
         await update.message.reply_photo(photo=img_buf, caption=f"🎨 {prompt}")
@@ -202,7 +315,7 @@ async def cmd_image(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 async def cmd_tts(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if not context.args:
         await update.message.reply_text(
-            "🔊 أرسل لي النص لتحويله إلى صوت:\n`/tts مرحباً، كيف حالك اليوم؟`",
+            "🗣️ أرسل النص لتحويله إلى صوت:\n`/tts مرحباً، كيف حالك اليوم؟`",
             parse_mode="Markdown",
         )
         return
@@ -226,10 +339,9 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     history = get_history(PLATFORM, user_id)
     persona = get_active_persona(PLATFORM, user_id)
-    system_prompt = persona.get("system_prompt")
 
     logger.info("رسالة تيليغرام من %s: %s", display_name or user_id, user_text[:60])
-    reply = ask_ollama(user_text, history, system_prompt=system_prompt)
+    reply = ask_llm(user_text, history, system_prompt=persona.get("system_prompt"))
 
     save_message(PLATFORM, user_id, "user", user_text)
     save_message(PLATFORM, user_id, "assistant", reply)
@@ -250,18 +362,27 @@ def build_telegram_app():
 
     app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
 
-    app.add_handler(CommandHandler("start", cmd_start))
-    app.add_handler(CommandHandler("help", cmd_help))
-    app.add_handler(CommandHandler("clear", cmd_clear))
-    app.add_handler(CommandHandler("memory", cmd_memory))
+    newpersona_conv = ConversationHandler(
+        entry_points=[CommandHandler("newpersona", cmd_newpersona)],
+        states={
+            NEWPERSONA_NAME:   [MessageHandler(filters.TEXT & ~filters.COMMAND, newpersona_name)],
+            NEWPERSONA_DESC:   [MessageHandler(filters.TEXT & ~filters.COMMAND, newpersona_desc)],
+            NEWPERSONA_PROMPT: [MessageHandler(filters.TEXT & ~filters.COMMAND, newpersona_prompt)],
+        },
+        fallbacks=[CommandHandler("cancel", newpersona_cancel)],
+    )
+
+    app.add_handler(CommandHandler("start",    cmd_start))
+    app.add_handler(CommandHandler("help",     cmd_help))
+    app.add_handler(CommandHandler("clear",    cmd_clear))
+    app.add_handler(CommandHandler("stats",    cmd_stats))
     app.add_handler(CommandHandler("personas", cmd_personas))
-    app.add_handler(CommandHandler("persona", cmd_persona))
-    app.add_handler(CommandHandler("newpersona", cmd_newpersona))
-    app.add_handler(CommandHandler("image", cmd_image))
-    app.add_handler(CommandHandler("tts", cmd_tts))
-    app.add_handler(CallbackQueryHandler(callback_persona, pattern=r"^persona:\d+$"))
+    app.add_handler(CommandHandler("image",    cmd_image))
+    app.add_handler(CommandHandler("tts",      cmd_tts))
+    app.add_handler(newpersona_conv)
+    app.add_handler(CallbackQueryHandler(callback_handler))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     app.add_error_handler(handle_error)
 
-    logger.info("✅ تم إعداد بوت تيليغرام بنجاح.")
+    logger.info("✅ تم إعداد بوت تيليغرام — %s", BOT_NAME)
     return app

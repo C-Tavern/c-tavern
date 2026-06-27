@@ -1,8 +1,6 @@
 """
-مزامنة المشروع تلقائياً مع GitHub.
-
-يستخدم هذا السكريبت GITHUB_TOKEN المخزّن في متغيرات البيئة
-لرفع التغييرات تلقائياً إلى المستودع عند بدء التطبيق أو تغيير الملفات.
+SANF🔞RA - 💭!! — مزامنة تلقائية مع GitHub
+يراقب تغييرات المشروع ويرفعها فوراً إلى المستودع.
 """
 
 import os
@@ -17,11 +15,12 @@ from watchdog.events import FileSystemEventHandler
 logger = logging.getLogger(__name__)
 
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN", "")
-GITHUB_REPO = os.getenv("GITHUB_REPO", "")
+GITHUB_REPO  = os.getenv("GITHUB_REPO",  "")
 
 IGNORE_PATHS = {
     ".git", "__pycache__", ".pyc", "node_modules",
-    ".env", "*.log", ".DS_Store", "*.pyc",
+    ".env", "*.log", ".DS_Store", "clavo_memory.sqlite",
+    "sanfra_memory.sqlite",
 }
 
 
@@ -30,17 +29,14 @@ def _should_ignore(path: str) -> bool:
     for part in p.parts:
         if part in IGNORE_PATHS:
             return True
-    return p.suffix in {".pyc", ".log"}
+    return p.suffix in {".pyc", ".log", ".sqlite"}
 
 
-def _run_git(args: list[str], cwd: str = ".") -> tuple[bool, str]:
+def _run_git(args: list, cwd: str = ".") -> tuple:
     try:
         result = subprocess.run(
-            ["git"] + args,
-            cwd=cwd,
-            capture_output=True,
-            text=True,
-            timeout=30,
+            ["git"] + args, cwd=cwd,
+            capture_output=True, text=True, timeout=30,
         )
         return result.returncode == 0, result.stdout + result.stderr
     except subprocess.TimeoutExpired:
@@ -57,25 +53,24 @@ def configure_git_remote() -> bool:
         return False
 
     remote_url = f"https://{GITHUB_TOKEN}@github.com/{GITHUB_REPO}.git"
-
-    ok, out = _run_git(["remote", "get-url", "origin"])
+    ok, _ = _run_git(["remote", "get-url", "origin"])
     if ok:
         _run_git(["remote", "set-url", "origin", remote_url])
     else:
         _run_git(["remote", "add", "origin", remote_url])
 
-    _run_git(["config", "user.email", "clavo-bot@users.noreply.github.com"])
-    _run_git(["config", "user.name", "كلافو — مزامنة تلقائية"])
+    _run_git(["config", "user.email", "sanfra-bot@users.noreply.github.com"])
+    _run_git(["config", "user.name", "SANF🔞RA — مزامنة تلقائية"])
     logger.info("✅ تم ضبط إعدادات git بنجاح.")
     return True
 
 
-def commit_and_push(message: str = "مزامنة تلقائية من كلافو") -> bool:
+def commit_and_push(message: str = "مزامنة تلقائية — SANF🔞RA") -> bool:
     if not GITHUB_TOKEN:
         return False
 
     _run_git(["add", "-A"])
-    ok_status, status_out = _run_git(["status", "--porcelain"])
+    _, status_out = _run_git(["status", "--porcelain"])
     if not status_out.strip():
         logger.debug("لا توجد تغييرات لرفعها.")
         return True
@@ -94,7 +89,7 @@ def commit_and_push(message: str = "مزامنة تلقائية من كلافو"
 
 
 class ChangeHandler(FileSystemEventHandler):
-    def __init__(self, debounce_seconds: float = 5.0):
+    def __init__(self, debounce_seconds: float = 8.0):
         self._debounce = debounce_seconds
         self._timer: threading.Timer | None = None
         self._lock = threading.Lock()
@@ -108,7 +103,7 @@ class ChangeHandler(FileSystemEventHandler):
 
     def _do_sync(self):
         logger.info("🔄 رصد تغييرات — بدء المزامنة مع GitHub...")
-        commit_and_push("تحديث تلقائي عند اكتشاف تغييرات")
+        commit_and_push("تحديث تلقائي — SANF🔞RA")
 
     def on_modified(self, event):
         if not event.is_directory and not _should_ignore(event.src_path):
@@ -128,7 +123,7 @@ def start_sync_watcher(watch_path: str = ".") -> Observer | None:
         return None
 
     logger.info("🔄 مزامنة أولية عند بدء التطبيق...")
-    commit_and_push("بدء تشغيل كلافو — مزامنة أولية")
+    commit_and_push("بدء تشغيل SANF🔞RA — مزامنة أولية")
 
     handler = ChangeHandler(debounce_seconds=10.0)
     observer = Observer()
@@ -147,6 +142,5 @@ def stop_sync_watcher(observer: Observer | None) -> None:
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
-    logger.info("تشغيل أداة المزامنة مباشرة...")
     configure_git_remote()
-    commit_and_push("مزامنة يدوية من sync_github.py")
+    commit_and_push("مزامنة يدوية — SANF🔞RA")

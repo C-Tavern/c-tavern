@@ -1,6 +1,6 @@
 """
-كلافو — رفيقك الذكي
-نقطة دخول التطبيق الرئيسية.
+SANF🔞RA - 💭!! — Main Application Entry Point
+Flask web dashboard + Telegram + WhatsApp + GitHub sync.
 """
 
 import asyncio
@@ -11,9 +11,9 @@ import sys
 from datetime import timedelta
 from flask import Flask, request, jsonify, render_template, redirect, url_for, session
 
-from utils.config import validate_config, config_summary, SECRET_KEY
+from utils.config import validate_config, config_summary, SECRET_KEY, BOT_NAME, DASHBOARD_BG_URL
 from utils.auth import require_auth, login, logout, is_authenticated
-from ai.ollama_client import ask_ollama
+from ai.llm_router import ask_llm
 from ai.image_gen import get_image_url
 from bots.telegram_bot import build_telegram_app
 from bots.whatsapp_bot import get_whatsapp_blueprint
@@ -64,7 +64,7 @@ def logout_route():
 @app.route("/")
 @require_auth
 def index():
-    return render_template("index.html")
+    return render_template("index.html", bg_url=DASHBOARD_BG_URL, bot_name=BOT_NAME)
 
 
 @app.route("/api/status")
@@ -107,13 +107,13 @@ def api_set_persona():
 @require_auth
 def api_create_persona():
     data = request.get_json(silent=True) or {}
-    name = data.get("name", "").strip()
-    description = data.get("description", "").strip()
+    name   = data.get("name", "").strip()
+    desc   = data.get("description", "").strip()
     prompt = data.get("system_prompt", "").strip()
     avatar = data.get("avatar", "✨").strip() or "✨"
     if not name or not prompt:
         return jsonify({"خطأ": "الاسم والتعليمات مطلوبان."}), 400
-    p = create_persona(name, description, prompt, avatar, created_by="web")
+    p = create_persona(name, desc, prompt, avatar, created_by="web")
     if not p:
         return jsonify({"خطأ": f"اسم «{name}» مستخدم بالفعل."}), 409
     return jsonify({"حالة": "تم الإنشاء", "شخصية": p}), 201
@@ -143,7 +143,7 @@ def api_chat():
 
     history = get_history(PLATFORM, session_id)
     persona = get_active_persona(PLATFORM, session_id)
-    reply = ask_ollama(message, history, system_prompt=persona.get("system_prompt"))
+    reply = ask_llm(message, history, system_prompt=persona.get("system_prompt"))
     save_message(PLATFORM, session_id, "user", message)
     save_message(PLATFORM, session_id, "assistant", reply)
     return jsonify({"reply": reply, "persona": persona.get("name"), "avatar": persona.get("avatar")})
@@ -214,7 +214,7 @@ def initialize_app():
     global _github_observer, _telegram_thread
 
     logger.info("=" * 55)
-    logger.info("🤖  كلافو — رفيقك الذكي | تشغيل التطبيق")
+    logger.info("🔞  %s | تشغيل التطبيق", BOT_NAME)
     logger.info("=" * 55)
 
     init_db()

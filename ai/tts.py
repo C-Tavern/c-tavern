@@ -1,36 +1,39 @@
 """
 تحويل النص إلى صوت — مجاني تماماً عبر edge-tts
-يستخدم محرك Microsoft Edge TTS بدون أي مفتاح API.
+صوت أنثوي عربي تعبيري بدون أي مفتاح API.
 """
 
 import io
 import asyncio
 import logging
-import tempfile
-import os
 import edge_tts
+from utils.config import TTS_VOICE
 
 logger = logging.getLogger(__name__)
 
+DEFAULT_VOICE = TTS_VOICE or "ar-EG-SalmaNeural"
+
 VOICES = {
-    "ar": "ar-SA-HamedNeural",
-    "ar-female": "ar-SA-ZariyahNeural",
-    "en": "en-US-AriaNeural",
-    "default": "ar-SA-HamedNeural",
+    "ar":          "ar-EG-SalmaNeural",
+    "ar-female":   "ar-EG-SalmaNeural",
+    "ar-sy":       "ar-SY-AmanyNeural",
+    "ar-male":     "ar-SA-HamedNeural",
+    "en":          "en-US-AriaNeural",
+    "default":     DEFAULT_VOICE,
 }
 
 
 async def _synthesize(text: str, voice: str) -> bytes:
     communicate = edge_tts.Communicate(text, voice)
-    audio_chunks = []
+    chunks = []
     async for chunk in communicate.stream():
         if chunk["type"] == "audio":
-            audio_chunks.append(chunk["data"])
-    return b"".join(audio_chunks)
+            chunks.append(chunk["data"])
+    return b"".join(chunks)
 
 
-def text_to_speech(text: str, voice_key: str = "ar") -> io.BytesIO | None:
-    voice = VOICES.get(voice_key, VOICES["default"])
+def text_to_speech(text: str, voice_key: str = "default") -> io.BytesIO | None:
+    voice = VOICES.get(voice_key, DEFAULT_VOICE)
     if len(text) > 1000:
         text = text[:1000] + "..."
 
@@ -55,8 +58,4 @@ def text_to_speech(text: str, voice_key: str = "ar") -> io.BytesIO | None:
 
 
 def list_voices() -> dict:
-    return {
-        "ar — عربي (ذكر)": VOICES["ar"],
-        "ar-female — عربي (أنثى)": VOICES["ar-female"],
-        "en — إنجليزي": VOICES["en"],
-    }
+    return {k: v for k, v in VOICES.items()}
