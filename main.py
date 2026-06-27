@@ -9,12 +9,13 @@ import threading
 import signal
 import sys
 from datetime import timedelta
-from flask import Flask, request, jsonify, render_template, redirect, url_for, session
+from flask import Flask, request, jsonify, render_template, redirect, url_for, session, send_file
 
 from utils.config import validate_config, config_summary, SECRET_KEY, BOT_NAME, DASHBOARD_BG_URL
 from utils.auth import require_auth, login, logout, is_authenticated
 from ai.llm_router import ask_llm
 from ai.image_gen import get_image_url
+from ai.tts import text_to_speech, list_voices
 from bots.telegram_bot import build_telegram_app
 from bots.whatsapp_bot import get_whatsapp_blueprint
 from sync_github import start_sync_watcher, stop_sync_watcher
@@ -166,6 +167,34 @@ def api_image():
         return jsonify({"خطأ": "الوصف مطلوب."}), 400
     url = get_image_url(prompt)
     return jsonify({"url": url, "prompt": prompt})
+
+
+@app.route("/api/tts", methods=["POST"])
+@require_auth
+def api_tts():
+    data = request.get_json(silent=True) or {}
+    text  = data.get("text", "").strip()
+    voice = data.get("voice", "default")
+    if not text:
+        return jsonify({"خطأ": "النص مطلوب."}), 400
+    if len(text) > 1200:
+        text = text[:1200]
+    audio_buf = text_to_speech(text, voice_key=voice)
+    if not audio_buf:
+        return jsonify({"خطأ": "فشل توليد الصوت. حاول مجدداً."}), 500
+    audio_buf.seek(0)
+    return send_file(
+        audio_buf,
+        mimetype="audio/mpeg",
+        as_attachment=False,
+        download_name="sanfra-voice.mp3",
+    )
+
+
+@app.route("/api/tts/voices", methods=["GET"])
+@require_auth
+def api_tts_voices():
+    return jsonify(list_voices())
 
 
 def run_telegram_bot():
