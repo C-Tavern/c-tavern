@@ -7,268 +7,255 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --bg: #0f0f1a;
-      --card: rgba(255,255,255,0.05);
-      --border: rgba(255,255,255,0.1);
-      --purple: #a78bfa;
-      --purple-dim: #7c3aed;
-      --text: #e5e7eb;
-      --muted: #9ca3af;
+      --bg: #0f0f1a; --card: rgba(255,255,255,0.05); --border: rgba(255,255,255,0.1);
+      --purple: #a78bfa; --purple-dim: #7c3aed; --text: #e5e7eb; --muted: #9ca3af;
     }
-    body {
-      font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
-      background: linear-gradient(135deg, #0f0f1a 0%, #1a1030 50%, #0d1a2e 100%);
-      min-height: 100vh;
-      color: var(--text);
-      direction: rtl;
+    body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; background: linear-gradient(135deg,#0f0f1a 0%,#1a1030 50%,#0d1a2e 100%); min-height:100vh; color:var(--text); direction:rtl; }
+    header { background:rgba(255,255,255,0.04); border-bottom:1px solid var(--border); padding:18px 32px; display:flex; align-items:center; justify-content:space-between; }
+    .logo { font-size:1.6rem; font-weight:700; color:var(--purple); }
+    .header-right { display:flex; gap:12px; align-items:center; }
+    .badge { display:inline-block; padding:4px 12px; border-radius:999px; font-size:0.75rem; font-weight:600; }
+    .badge-on  { background:rgba(34,197,94,0.15);  color:#4ade80; border:1px solid rgba(34,197,94,0.3); }
+    .badge-off { background:rgba(239,68,68,0.15);  color:#f87171; border:1px solid rgba(239,68,68,0.3); }
+    .logout-btn { padding:6px 14px; border-radius:8px; background:rgba(239,68,68,0.15); color:#f87171; border:1px solid rgba(239,68,68,0.3); cursor:pointer; font-size:0.8rem; font-weight:600; text-decoration:none; }
+    .container { max-width:1100px; margin:40px auto; padding:0 24px; }
+    .section-title { font-size:1.3rem; font-weight:700; color:var(--purple); margin-bottom:18px; }
+    .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:20px; margin-bottom:24px; }
+    .card { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:28px; backdrop-filter:blur(12px); transition:border-color 0.2s; }
+    .card:hover { border-color:rgba(167,139,250,0.3); }
+    .card-title { font-size:1rem; font-weight:600; color:var(--purple); margin-bottom:16px; display:flex; align-items:center; gap:8px; }
+    .qr-section { text-align:center; }
+    .qr-img { width:200px; height:200px; border-radius:12px; border:3px solid var(--purple); margin:16px auto; display:block; background:white; }
+    .qr-hint { font-size:0.82rem; color:var(--muted); margin-top:8px; line-height:1.6; }
+    .connected-banner { background:rgba(34,197,94,0.1); border:1px solid rgba(34,197,94,0.3); border-radius:10px; padding:16px; color:#4ade80; text-align:center; font-weight:600; }
+    .btn { display:inline-block; padding:10px 22px; border-radius:10px; border:none; cursor:pointer; font-size:0.9rem; font-weight:600; transition:opacity 0.2s,transform 0.1s; margin-top:12px; font-family:inherit; }
+    .btn:hover { opacity:0.85; transform:translateY(-1px); }
+    .btn-sm { padding:6px 14px; font-size:0.8rem; margin-top:0; }
+    .btn-purple { background:var(--purple-dim); color:white; }
+    .btn-red { background:rgba(239,68,68,0.8); color:white; }
+    .btn-green { background:rgba(34,197,94,0.8); color:white; }
+    .btn-ghost { background:rgba(255,255,255,0.08); color:var(--text); }
+    .info-row { display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--border); font-size:0.9rem; }
+    .info-row:last-child { border-bottom:none; }
+    .info-key { color:var(--muted); }
+    .info-val { font-weight:600; }
+
+    /* Memory */
+    .mem-stats { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-bottom:20px; }
+    .mem-stat-box { background:rgba(167,139,250,0.08); border:1px solid rgba(167,139,250,0.2); border-radius:10px; padding:14px; text-align:center; }
+    .mem-stat-num { font-size:1.8rem; font-weight:700; color:var(--purple); }
+    .mem-stat-lbl { font-size:0.75rem; color:var(--muted); margin-top:4px; }
+    .users-table { width:100%; border-collapse:collapse; font-size:0.82rem; }
+    .users-table th { color:var(--muted); font-weight:600; padding:8px 6px; border-bottom:1px solid var(--border); text-align:right; }
+    .users-table td { padding:8px 6px; border-bottom:1px solid rgba(255,255,255,0.04); }
+    .plat-badge { display:inline-block; padding:2px 8px; border-radius:6px; font-size:0.72rem; font-weight:600; }
+    .plat-telegram { background:rgba(51,144,236,0.2); color:#60a5fa; }
+    .plat-whatsapp { background:rgba(37,211,102,0.2); color:#4ade80; }
+    .plat-web      { background:rgba(167,139,250,0.2); color:#c4b5fd; }
+
+    /* Personas */
+    .persona-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:12px; margin-bottom:20px; }
+    .persona-card { background:rgba(255,255,255,0.04); border:2px solid var(--border); border-radius:12px; padding:16px; cursor:pointer; transition:all 0.2s; text-align:center; position:relative; }
+    .persona-card:hover { border-color:var(--purple); background:rgba(167,139,250,0.08); }
+    .persona-card.active { border-color:#4ade80; background:rgba(34,197,94,0.06); }
+    .persona-avatar { font-size:2rem; margin-bottom:8px; }
+    .persona-name { font-weight:700; font-size:0.95rem; color:var(--text); }
+    .persona-desc { font-size:0.75rem; color:var(--muted); margin-top:4px; line-height:1.4; }
+    .persona-del { position:absolute; top:8px; left:8px; background:rgba(239,68,68,0.7); color:white; border:none; border-radius:6px; padding:2px 7px; font-size:0.7rem; cursor:pointer; display:none; }
+    .persona-card:hover .persona-del { display:block; }
+    .active-badge { position:absolute; top:8px; right:8px; background:rgba(34,197,94,0.8); color:white; font-size:0.65rem; font-weight:700; padding:2px 6px; border-radius:6px; }
+    .new-persona-form { background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:12px; padding:20px; }
+    .form-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px; }
+    .form-row.full { grid-template-columns:1fr; }
+    input, textarea, select {
+      width:100%; padding:10px 14px; border-radius:10px; border:1px solid var(--border);
+      background:rgba(255,255,255,0.05); color:var(--text); font-size:0.9rem;
+      outline:none; font-family:inherit; transition:border-color 0.2s;
     }
-    header {
-      background: rgba(255,255,255,0.04);
-      border-bottom: 1px solid var(--border);
-      padding: 18px 32px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .logo { font-size: 1.6rem; font-weight: 700; color: var(--purple); }
-    .badge {
-      display: inline-block;
-      padding: 4px 12px;
-      border-radius: 999px;
-      font-size: 0.75rem;
-      font-weight: 600;
-    }
-    .badge-on { background: rgba(34,197,94,0.15); color: #4ade80; border: 1px solid rgba(34,197,94,0.3); }
-    .badge-off { background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
-    .container { max-width: 1100px; margin: 40px auto; padding: 0 24px; }
-    h2 { font-size: 1.5rem; font-weight: 700; color: var(--purple); margin-bottom: 24px; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 32px; }
-    .card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 28px;
-      backdrop-filter: blur(12px);
-      transition: border-color 0.2s;
-    }
-    .card:hover { border-color: rgba(167,139,250,0.3); }
-    .card-title {
-      font-size: 1rem;
-      font-weight: 600;
-      color: var(--purple);
-      margin-bottom: 16px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .stat-value { font-size: 2rem; font-weight: 700; color: var(--text); }
-    .stat-label { font-size: 0.85rem; color: var(--muted); margin-top: 4px; }
-    .qr-section { text-align: center; }
-    .qr-img {
-      width: 200px;
-      height: 200px;
-      border-radius: 12px;
-      border: 3px solid var(--purple);
-      margin: 16px auto;
-      display: block;
-      background: white;
-      cursor: pointer;
-    }
-    .qr-hint { font-size: 0.82rem; color: var(--muted); margin-top: 8px; line-height: 1.6; }
-    .connected-banner {
-      background: rgba(34,197,94,0.1);
-      border: 1px solid rgba(34,197,94,0.3);
-      border-radius: 10px;
-      padding: 16px;
-      color: #4ade80;
-      text-align: center;
-      font-weight: 600;
-    }
-    .btn {
-      display: inline-block;
-      padding: 10px 22px;
-      border-radius: 10px;
-      border: none;
-      cursor: pointer;
-      font-size: 0.9rem;
-      font-weight: 600;
-      transition: opacity 0.2s, transform 0.1s;
-      margin-top: 12px;
-    }
-    .btn:hover { opacity: 0.85; transform: translateY(-1px); }
-    .btn-purple { background: var(--purple-dim); color: white; }
-    .btn-red { background: rgba(239,68,68,0.8); color: white; }
-    .info-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 10px 0;
-      border-bottom: 1px solid var(--border);
-      font-size: 0.9rem;
-    }
-    .info-row:last-child { border-bottom: none; }
-    .info-key { color: var(--muted); }
-    .info-val { font-weight: 600; color: var(--text); }
-    .chat-test {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 28px;
-      margin-top: 20px;
-    }
-    .chat-messages {
-      height: 240px;
-      overflow-y: auto;
-      margin-bottom: 16px;
-      padding: 12px;
-      background: rgba(0,0,0,0.2);
-      border-radius: 10px;
-    }
-    .msg { margin: 8px 0; padding: 10px 14px; border-radius: 10px; max-width: 80%; font-size: 0.9rem; line-height: 1.5; }
-    .msg-user { background: var(--purple-dim); color: white; margin-right: auto; border-radius: 10px 10px 4px 10px; }
-    .msg-bot { background: rgba(255,255,255,0.08); color: var(--text); margin-left: auto; border-radius: 10px 10px 10px 4px; }
-    .chat-input-row { display: flex; gap: 10px; }
-    .chat-input {
-      flex: 1;
-      padding: 12px 16px;
-      border-radius: 10px;
-      border: 1px solid var(--border);
-      background: rgba(255,255,255,0.05);
-      color: var(--text);
-      font-size: 0.95rem;
-      outline: none;
-      font-family: inherit;
-    }
-    .chat-input:focus { border-color: var(--purple); }
-    footer { text-align: center; padding: 40px 24px 24px; color: var(--muted); font-size: 0.82rem; }
-    footer a { color: var(--purple); text-decoration: none; }
-    .spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.6s linear infinite; vertical-align: middle; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .mem-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 20px; }
-    .mem-stat-box { background: rgba(167,139,250,0.08); border: 1px solid rgba(167,139,250,0.2); border-radius: 10px; padding: 14px; text-align: center; }
-    .mem-stat-num { font-size: 1.8rem; font-weight: 700; color: var(--purple); }
-    .mem-stat-lbl { font-size: 0.75rem; color: var(--muted); margin-top: 4px; }
-    .users-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
-    .users-table th { color: var(--muted); font-weight: 600; padding: 8px 6px; border-bottom: 1px solid var(--border); text-align: right; }
-    .users-table td { padding: 8px 6px; border-bottom: 1px solid rgba(255,255,255,0.04); color: var(--text); }
-    .plat-badge { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 0.72rem; font-weight: 600; }
-    .plat-telegram { background: rgba(51,144,236,0.2); color: #60a5fa; }
-    .plat-whatsapp { background: rgba(37,211,102,0.2); color: #4ade80; }
-    .plat-web      { background: rgba(167,139,250,0.2); color: #c4b5fd; }
+    input:focus, textarea:focus { border-color:var(--purple); }
+    textarea { resize:vertical; min-height:80px; }
+    label { font-size:0.8rem; color:var(--muted); margin-bottom:5px; display:block; }
+
+    /* Chat */
+    .chat-test { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:28px; }
+    .chat-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
+    .active-persona-label { font-size:0.85rem; color:var(--muted); }
+    .active-persona-label span { color:var(--purple); font-weight:700; }
+    .chat-messages { height:260px; overflow-y:auto; margin-bottom:16px; padding:12px; background:rgba(0,0,0,0.2); border-radius:10px; }
+    .msg { margin:8px 0; padding:10px 14px; border-radius:10px; max-width:82%; font-size:0.9rem; line-height:1.5; }
+    .msg-user { background:var(--purple-dim); color:white; margin-right:auto; border-radius:10px 10px 4px 10px; }
+    .msg-bot { background:rgba(255,255,255,0.08); color:var(--text); margin-left:auto; border-radius:10px 10px 10px 4px; }
+    .chat-input-row { display:flex; gap:10px; }
+    .chat-input { flex:1; padding:12px 16px; border-radius:10px; border:1px solid var(--border); background:rgba(255,255,255,0.05); color:var(--text); font-size:0.95rem; outline:none; font-family:inherit; }
+    .chat-input:focus { border-color:var(--purple); }
+
+    /* Image gen */
+    .img-result { margin-top:16px; }
+    .img-result img { width:100%; max-width:400px; border-radius:12px; display:block; margin:0 auto; }
+
+    footer { text-align:center; padding:40px 24px 24px; color:var(--muted); font-size:0.82rem; }
+    footer a { color:var(--purple); text-decoration:none; }
+    .spinner { display:inline-block; width:16px; height:16px; border:2px solid rgba(255,255,255,0.3); border-top-color:white; border-radius:50%; animation:spin 0.6s linear infinite; vertical-align:middle; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    .toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:#1e1e2e; border:1px solid var(--purple); color:var(--text); padding:10px 22px; border-radius:12px; font-size:0.88rem; z-index:999; opacity:0; transition:opacity 0.3s; pointer-events:none; }
+    .toast.show { opacity:1; }
   </style>
 </head>
 <body>
 <header>
   <div class="logo">🤖 كلافو</div>
-  <div style="display:flex;gap:12px;align-items:center">
-    <span id="tg-badge" class="badge badge-off">تيليغرام: غير مفعّل</span>
-    <span id="wa-badge" class="badge badge-off">واتساب: غير متصل</span>
+  <div class="header-right">
+    <span id="tg-badge" class="badge badge-off">تيليغرام: —</span>
+    <span id="wa-badge" class="badge badge-off">واتساب: —</span>
+    <a href="/logout" class="logout-btn">تسجيل الخروج</a>
   </div>
 </header>
 
 <div class="container">
-  <h2>⚡ لوحة التحكم</h2>
+  <div class="section-title">⚡ لوحة التحكم</div>
 
+  <!-- System + WhatsApp QR -->
   <div class="grid">
     <div class="card">
       <div class="card-title">📊 معلومات النظام</div>
-      <div id="sys-info">
-        <div class="info-row"><span class="info-key">النموذج</span><span class="info-val" id="model-name">جاري التحميل...</span></div>
-        <div class="info-row"><span class="info-key">رابط أولاما</span><span class="info-val" id="ollama-url">—</span></div>
-        <div class="info-row"><span class="info-key">تيليغرام</span><span class="info-val" id="tg-status">—</span></div>
-        <div class="info-row"><span class="info-key">مزامنة GitHub</span><span class="info-val" id="gh-status">—</span></div>
-      </div>
+      <div class="info-row"><span class="info-key">النموذج</span><span class="info-val" id="model-name">…</span></div>
+      <div class="info-row"><span class="info-key">رابط أولاما</span><span class="info-val" id="ollama-url">…</span></div>
+      <div class="info-row"><span class="info-key">تيليغرام</span><span class="info-val" id="tg-status">…</span></div>
+      <div class="info-row"><span class="info-key">مزامنة GitHub</span><span class="info-val" id="gh-status">…</span></div>
+      <div class="info-row"><span class="info-key">أمان لوحة التحكم</span><span class="info-val" id="sec-status">…</span></div>
     </div>
 
     <div class="card qr-section">
       <div class="card-title">📱 ربط واتساب</div>
       <div id="wa-qr-area">
-        <img id="qr-img" class="qr-img" src="/whatsapp/qr" alt="رمز QR"
-             title="امسح هذا الرمز بتطبيق واتساب لربط حسابك">
-        <p class="qr-hint">
-          افتح واتساب على هاتفك<br>
-          اذهب إلى الإعدادات ← الأجهزة المرتبطة<br>
-          امسح رمز QR لربط الحساب
-        </p>
-        <button class="btn btn-purple" onclick="refreshQR()">🔄 تحديث الرمز</button>
+        <img id="qr-img" class="qr-img" src="/whatsapp/qr" alt="QR">
+        <p class="qr-hint">افتح واتساب ← الإعدادات ← الأجهزة المرتبطة<br>ثم امسح الرمز</p>
+        <button class="btn btn-purple" onclick="refreshQR()">🔄 تحديث</button>
       </div>
       <div id="wa-connected-area" style="display:none">
-        <div class="connected-banner">✅ واتساب متصل بنجاح!</div>
+        <div class="connected-banner">✅ واتساب متصل!</div>
         <p id="wa-phone" class="qr-hint" style="margin-top:12px"></p>
         <button class="btn btn-red" onclick="disconnectWA()">قطع الاتصال</button>
       </div>
     </div>
   </div>
 
-  <div class="card" style="margin-bottom:20px">
+  <!-- Memory Stats -->
+  <div class="card" style="margin-bottom:24px">
     <div class="card-title">🧠 الذاكرة طويلة الأمد</div>
     <div class="mem-stats">
-      <div class="mem-stat-box">
-        <div class="mem-stat-num" id="mem-total-msgs">—</div>
-        <div class="mem-stat-lbl">إجمالي الرسائل</div>
-      </div>
-      <div class="mem-stat-box">
-        <div class="mem-stat-num" id="mem-total-users">—</div>
-        <div class="mem-stat-lbl">إجمالي المستخدمين</div>
-      </div>
-      <div class="mem-stat-box" style="grid-column:span 1">
-        <div style="font-size:0.78rem;color:var(--muted);line-height:1.8" id="mem-platforms">—</div>
-        <div class="mem-stat-lbl">توزيع المنصات</div>
-      </div>
+      <div class="mem-stat-box"><div class="mem-stat-num" id="mem-msgs">—</div><div class="mem-stat-lbl">إجمالي الرسائل</div></div>
+      <div class="mem-stat-box"><div class="mem-stat-num" id="mem-users">—</div><div class="mem-stat-lbl">إجمالي المستخدمين</div></div>
+      <div class="mem-stat-box"><div style="font-size:0.78rem;color:var(--muted);line-height:1.9" id="mem-platforms">—</div><div class="mem-stat-lbl">توزيع المنصات</div></div>
     </div>
-    <div id="mem-users-wrap">
-      <table class="users-table">
-        <thead>
-          <tr>
-            <th>المنصة</th><th>المعرّف</th><th>الاسم</th><th>آخر نشاط</th><th>الرسائل</th>
-          </tr>
-        </thead>
-        <tbody id="mem-users-body">
-          <tr><td colspan="5" style="text-align:center;color:var(--muted);padding:20px">جاري التحميل...</td></tr>
-        </tbody>
-      </table>
+    <table class="users-table">
+      <thead><tr><th>المنصة</th><th>الاسم</th><th>آخر نشاط</th><th>الرسائل</th></tr></thead>
+      <tbody id="mem-users-body"><tr><td colspan="4" style="text-align:center;color:var(--muted);padding:16px">جاري التحميل…</td></tr></tbody>
+    </table>
+  </div>
+
+  <!-- Personas -->
+  <div class="card" style="margin-bottom:24px">
+    <div class="card-title">🎭 نظام الشخصيات</div>
+    <div id="personas-grid" class="persona-grid"></div>
+
+    <details style="margin-top:8px">
+      <summary style="cursor:pointer;color:var(--purple);font-size:0.9rem;font-weight:600;padding:8px 0">✨ إنشاء شخصية جديدة</summary>
+      <div class="new-persona-form" style="margin-top:12px">
+        <div class="form-row">
+          <div>
+            <label>رمز تعبيري (emoji)</label>
+            <input id="p-avatar" type="text" value="✨" placeholder="✨" maxlength="4">
+          </div>
+          <div>
+            <label>اسم الشخصية *</label>
+            <input id="p-name" type="text" placeholder="مثال: الطبيب الحكيم">
+          </div>
+        </div>
+        <div class="form-row">
+          <div>
+            <label>وصف قصير</label>
+            <input id="p-desc" type="text" placeholder="وصف مختصر يظهر للمستخدمين">
+          </div>
+        </div>
+        <div class="form-row full">
+          <div>
+            <label>تعليمات الشخصية (System Prompt) *</label>
+            <textarea id="p-prompt" placeholder="أنت طبيب خبير وودود. تُجيب بدقة علمية وبأسلوب إنساني دافئ. تُقدّم نصائح طبية عامة دون تشخيص مباشر."></textarea>
+          </div>
+        </div>
+        <button class="btn btn-green" onclick="createPersona()">➕ إنشاء الشخصية</button>
+      </div>
+    </details>
+  </div>
+
+  <!-- Image Generation -->
+  <div class="card" style="margin-bottom:24px">
+    <div class="card-title">🎨 توليد الصور — مجاناً (Pollinations.AI)</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <input class="chat-input" id="img-prompt" style="flex:1;min-width:200px" placeholder="صف الصورة التي تريدها… مثال: غروب الشمس على البحر" onkeydown="if(event.key==='Enter')genImage()">
+      <button class="btn btn-purple" onclick="genImage()" id="img-btn">🎨 توليد</button>
+    </div>
+    <div class="img-result" id="img-result" style="display:none">
+      <img id="img-out" src="" alt="الصورة المولّدة">
+      <p style="text-align:center;margin-top:8px;font-size:0.8rem;color:var(--muted)">مولّدة مجاناً عبر Pollinations.AI</p>
     </div>
   </div>
 
+  <!-- Chat -->
   <div class="chat-test">
-    <div class="card-title">💬 اختبار المحادثة</div>
+    <div class="chat-header">
+      <div class="card-title" style="margin-bottom:0">💬 اختبار المحادثة</div>
+      <div class="active-persona-label">الشخصية: <span id="active-persona-label">كلافو 🤖</span></div>
+    </div>
     <div class="chat-messages" id="chat-box">
       <div class="msg msg-bot">مرحباً! أنا كلافو. كيف يمكنني مساعدتك اليوم؟ 😊</div>
     </div>
     <div class="chat-input-row">
-      <input class="chat-input" id="chat-input" type="text" placeholder="اكتب رسالتك هنا..." onkeydown="if(event.key==='Enter')sendMsg()">
+      <input class="chat-input" id="chat-input" type="text" placeholder="اكتب رسالتك…" onkeydown="if(event.key==='Enter')sendMsg()">
       <button class="btn btn-purple" onclick="sendMsg()" id="send-btn">إرسال</button>
     </div>
   </div>
 </div>
 
 <footer>
-  <p>كلافو — رفيقك الذكي على <a href="https://clavo.chat" target="_blank">clavo.chat</a></p>
+  <p>كلافو — رفيقك الذكي | <a href="https://clavo.chat" target="_blank">clavo.chat</a></p>
 </footer>
 
+<div class="toast" id="toast"></div>
+
 <script>
+  const PLAT_LABELS = { telegram:'تيليغرام', whatsapp:'واتساب', web:'ويب' };
+  const PLAT_CLASS  = { telegram:'plat-telegram', whatsapp:'plat-whatsapp', web:'plat-web' };
+
+  function showToast(msg, ms=2500) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), ms);
+  }
+
   async function loadStatus() {
     try {
-      const r = await fetch('/api/status');
-      const d = await r.json();
+      const d = await (await fetch('/api/status')).json();
       document.getElementById('model-name').textContent = d['نموذج_الذكاء_الاصطناعي'] || '—';
-      document.getElementById('ollama-url').textContent = d['رابط_أولاما'] || '—';
-      document.getElementById('tg-status').textContent = d['تيليغرام_مُفعّل'] ? '✅ مفعّل' : '❌ غير مفعّل';
-      document.getElementById('gh-status').textContent = d['مزامنة_جيتهاب_مُفعّلة'] ? '✅ مفعّلة' : '❌ غير مفعّلة';
+      document.getElementById('ollama-url').textContent  = d['رابط_أولاما'] || '—';
+      document.getElementById('tg-status').textContent   = d['تيليغرام_مُفعّل']        ? '✅ مفعّل'  : '❌ غير مفعّل';
+      document.getElementById('gh-status').textContent   = d['مزامنة_جيتهاب_مُفعّلة']  ? '✅ مفعّلة' : '❌ غير مفعّلة';
+      document.getElementById('sec-status').textContent  = d['لوحة_التحكم_محمية']       ? '🔐 محمية'  : '⚠️ مفتوحة';
       const tgBadge = document.getElementById('tg-badge');
-      if (d['تيليغرام_مُفعّل']) { tgBadge.textContent = 'تيليغرام: نشط'; tgBadge.className = 'badge badge-on'; }
-    } catch(e) { console.warn('فشل تحميل الحالة', e); }
+      tgBadge.textContent  = d['تيليغرام_مُفعّل'] ? 'تيليغرام: نشط' : 'تيليغرام: غير مفعّل';
+      tgBadge.className    = 'badge ' + (d['تيليغرام_مُفعّل'] ? 'badge-on' : 'badge-off');
+    } catch(e) {}
   }
 
   async function checkWAStatus() {
     try {
-      const r = await fetch('/whatsapp/qr/status');
-      const d = await r.json();
+      const d = await (await fetch('/whatsapp/qr/status')).json();
       const waBadge = document.getElementById('wa-badge');
       if (d['متصل']) {
         document.getElementById('wa-qr-area').style.display = 'none';
         document.getElementById('wa-connected-area').style.display = 'block';
-        document.getElementById('wa-phone').textContent = 'الهاتف: ' + (d['هاتف'] || 'غير محدد');
+        document.getElementById('wa-phone').textContent = 'الهاتف: ' + (d['هاتف'] || '—');
         waBadge.textContent = 'واتساب: متصل'; waBadge.className = 'badge badge-on';
       } else {
         document.getElementById('wa-qr-area').style.display = 'block';
@@ -278,86 +265,116 @@
     } catch(e) {}
   }
 
-  function refreshQR() {
-    const img = document.getElementById('qr-img');
-    img.src = '/whatsapp/qr?' + Date.now();
+  function refreshQR() { document.getElementById('qr-img').src = '/whatsapp/qr?' + Date.now(); }
+  async function disconnectWA() { await fetch('/whatsapp/disconnect',{method:'POST'}); refreshQR(); checkWAStatus(); }
+
+  async function loadMemoryStats() {
+    try {
+      const d = await (await fetch('/api/memory/stats')).json();
+      document.getElementById('mem-msgs').textContent  = d['إجمالي_الرسائل']  ?? '0';
+      document.getElementById('mem-users').textContent = d['إجمالي_المستخدمين'] ?? '0';
+      const byPlat = d['رسائل_حسب_المنصة'] || {};
+      document.getElementById('mem-platforms').textContent =
+        Object.entries(byPlat).map(([p,n]) => `${PLAT_LABELS[p]||p}: ${n}`).join('\n') || '—';
+      const users = d['آخر_المستخدمين'] || [];
+      const tbody = document.getElementById('mem-users-body');
+      tbody.innerHTML = users.length ? users.map(u => {
+        const cls = PLAT_CLASS[u.platform]||''; const lbl = PLAT_LABELS[u.platform]||u.platform;
+        return `<tr>
+          <td><span class="plat-badge ${cls}">${lbl}</span></td>
+          <td>${u.display_name||'—'}</td>
+          <td style="color:var(--muted);font-size:0.78rem">${(u.last_seen||'').slice(0,16)}</td>
+          <td style="font-weight:600">${u.msg_count??'—'}</td>
+        </tr>`;
+      }).join('') : '<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:16px">لا توجد محادثات بعد.</td></tr>';
+    } catch(e) {}
   }
 
-  async function disconnectWA() {
-    await fetch('/whatsapp/disconnect', { method: 'POST' });
-    refreshQR();
-    checkWAStatus();
+  let _activePersonaId = null;
+  async function loadPersonas() {
+    try {
+      const d = await (await fetch('/api/personas')).json();
+      const personas = d['شخصيات'] || [];
+      const active   = d['النشطة']  || {};
+      _activePersonaId = active.id;
+      document.getElementById('active-persona-label').textContent =
+        (active.avatar||'🤖') + ' ' + (active.name||'كلافو');
+      const grid = document.getElementById('personas-grid');
+      grid.innerHTML = personas.map(p => {
+        const isActive = p.id === active.id;
+        const isCustom = !p.is_default;
+        return `<div class="persona-card ${isActive?'active':''}" onclick="setPersona(${p.id})" id="pc-${p.id}">
+          ${isActive ? '<div class="active-badge">نشط</div>' : ''}
+          ${isCustom ? `<button class="persona-del" onclick="event.stopPropagation();delPersona(${p.id})">✕</button>` : ''}
+          <div class="persona-avatar">${p.avatar||'🤖'}</div>
+          <div class="persona-name">${p.name}</div>
+          <div class="persona-desc">${p.description||''}</div>
+        </div>`;
+      }).join('');
+    } catch(e) {}
+  }
+
+  async function setPersona(id) {
+    const r = await fetch('/api/personas/set', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({persona_id:id}) });
+    if (r.ok) { showToast('✅ تم تفعيل الشخصية'); loadPersonas(); }
+    else showToast('❌ فشل تفعيل الشخصية');
+  }
+
+  async function createPersona() {
+    const name   = document.getElementById('p-name').value.trim();
+    const desc   = document.getElementById('p-desc').value.trim();
+    const prompt = document.getElementById('p-prompt').value.trim();
+    const avatar = document.getElementById('p-avatar').value.trim() || '✨';
+    if (!name || !prompt) { showToast('❌ الاسم والتعليمات مطلوبان'); return; }
+    const r = await fetch('/api/personas/create', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({name,description:desc,system_prompt:prompt,avatar}) });
+    if (r.ok) { showToast('✅ تم إنشاء الشخصية'); document.getElementById('p-name').value=''; document.getElementById('p-desc').value=''; document.getElementById('p-prompt').value=''; loadPersonas(); }
+    else { const e = await r.json(); showToast('❌ ' + (e['خطأ']||'فشل الإنشاء')); }
+  }
+
+  async function delPersona(id) {
+    if (!confirm('هل تريد حذف هذه الشخصية؟')) return;
+    const r = await fetch(`/api/personas/${id}`, {method:'DELETE'});
+    if (r.ok) { showToast('🗑️ تم حذف الشخصية'); loadPersonas(); }
+    else showToast('❌ لا يمكن حذف هذه الشخصية');
+  }
+
+  async function genImage() {
+    const prompt = document.getElementById('img-prompt').value.trim();
+    if (!prompt) { showToast('❌ أدخل وصف الصورة'); return; }
+    const btn = document.getElementById('img-btn');
+    btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
+    const r = await fetch('/api/image', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({prompt}) });
+    if (r.ok) {
+      const d = await r.json();
+      document.getElementById('img-out').src = d.url;
+      document.getElementById('img-result').style.display = 'block';
+    } else showToast('❌ فشل توليد الصورة');
+    btn.disabled = false; btn.innerHTML = '🎨 توليد';
   }
 
   async function sendMsg() {
     const input = document.getElementById('chat-input');
-    const text = input.value.trim();
+    const text  = input.value.trim();
     if (!text) return;
     input.value = '';
     const box = document.getElementById('chat-box');
     box.innerHTML += `<div class="msg msg-user">${text}</div>`;
-    box.innerHTML += `<div class="msg msg-bot" id="typing"><span class="spinner"></span> جاري الكتابة...</div>`;
+    box.innerHTML += `<div class="msg msg-bot" id="typing"><span class="spinner"></span> جاري الكتابة…</div>`;
     box.scrollTop = box.scrollHeight;
     document.getElementById('send-btn').disabled = true;
     try {
-      const r = await fetch('/api/chat', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ message: text })
-      });
-      const d = await r.json();
+      const d = await (await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:text})})).json();
       document.getElementById('typing').remove();
-      box.innerHTML += `<div class="msg msg-bot">${d.reply || '...'}</div>`;
-    } catch(e) {
-      document.getElementById('typing').remove();
-      box.innerHTML += `<div class="msg msg-bot">⚠️ خطأ في الاتصال.</div>`;
-    }
+      const avatar = d.avatar || '🤖';
+      box.innerHTML += `<div class="msg msg-bot">${avatar} ${d.reply||'…'}</div>`;
+      if (d.persona) document.getElementById('active-persona-label').textContent = `${avatar} ${d.persona}`;
+    } catch(e) { document.getElementById('typing').remove(); box.innerHTML += `<div class="msg msg-bot">⚠️ خطأ.</div>`; }
     box.scrollTop = box.scrollHeight;
     document.getElementById('send-btn').disabled = false;
   }
 
-  const PLAT_LABELS = { telegram: 'تيليغرام', whatsapp: 'واتساب', web: 'ويب' };
-  const PLAT_CLASS  = { telegram: 'plat-telegram', whatsapp: 'plat-whatsapp', web: 'plat-web' };
-
-  async function loadMemoryStats() {
-    try {
-      const r = await fetch('/api/memory/stats');
-      const d = await r.json();
-      document.getElementById('mem-total-msgs').textContent  = d['إجمالي_الرسائل']  ?? '0';
-      document.getElementById('mem-total-users').textContent = d['إجمالي_المستخدمين'] ?? '0';
-
-      const byPlat = d['رسائل_حسب_المنصة'] || {};
-      const platLines = Object.entries(byPlat)
-        .map(([p, n]) => `${PLAT_LABELS[p] || p}: ${n} رسالة`)
-        .join('\n');
-      document.getElementById('mem-platforms').textContent = platLines || '—';
-
-      const users = d['آخر_المستخدمين'] || [];
-      const tbody = document.getElementById('mem-users-body');
-      if (!users.length) {
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:20px">لا توجد محادثات مسجّلة بعد.</td></tr>';
-        return;
-      }
-      tbody.innerHTML = users.map(u => {
-        const plat = u.platform || '';
-        const cls  = PLAT_CLASS[plat] || '';
-        const lbl  = PLAT_LABELS[plat] || plat;
-        const last = (u.last_seen || '').replace('T', ' ').slice(0, 16);
-        return `<tr>
-          <td><span class="plat-badge ${cls}">${lbl}</span></td>
-          <td style="color:var(--muted);font-size:0.78rem">${u.user_id || '—'}</td>
-          <td>${u.display_name || '—'}</td>
-          <td style="color:var(--muted);font-size:0.78rem">${last}</td>
-          <td style="font-weight:600">${u.msg_count ?? '—'}</td>
-        </tr>`;
-      }).join('');
-    } catch(e) { console.warn('فشل تحميل إحصائيات الذاكرة', e); }
-  }
-
-  loadStatus();
-  checkWAStatus();
-  loadMemoryStats();
-  setInterval(checkWAStatus, 15000);
+  loadStatus(); checkWAStatus(); loadMemoryStats(); loadPersonas();
+  setInterval(checkWAStatus,  15000);
   setInterval(loadMemoryStats, 30000);
 </script>
 </body>
