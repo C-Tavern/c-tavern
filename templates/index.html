@@ -144,6 +144,17 @@
     footer a { color: var(--purple); text-decoration: none; }
     .spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.6s linear infinite; vertical-align: middle; }
     @keyframes spin { to { transform: rotate(360deg); } }
+    .mem-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+    .mem-stat-box { background: rgba(167,139,250,0.08); border: 1px solid rgba(167,139,250,0.2); border-radius: 10px; padding: 14px; text-align: center; }
+    .mem-stat-num { font-size: 1.8rem; font-weight: 700; color: var(--purple); }
+    .mem-stat-lbl { font-size: 0.75rem; color: var(--muted); margin-top: 4px; }
+    .users-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+    .users-table th { color: var(--muted); font-weight: 600; padding: 8px 6px; border-bottom: 1px solid var(--border); text-align: right; }
+    .users-table td { padding: 8px 6px; border-bottom: 1px solid rgba(255,255,255,0.04); color: var(--text); }
+    .plat-badge { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 0.72rem; font-weight: 600; }
+    .plat-telegram { background: rgba(51,144,236,0.2); color: #60a5fa; }
+    .plat-whatsapp { background: rgba(37,211,102,0.2); color: #4ade80; }
+    .plat-web      { background: rgba(167,139,250,0.2); color: #c4b5fd; }
   </style>
 </head>
 <body>
@@ -186,6 +197,36 @@
         <p id="wa-phone" class="qr-hint" style="margin-top:12px"></p>
         <button class="btn btn-red" onclick="disconnectWA()">قطع الاتصال</button>
       </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:20px">
+    <div class="card-title">🧠 الذاكرة طويلة الأمد</div>
+    <div class="mem-stats">
+      <div class="mem-stat-box">
+        <div class="mem-stat-num" id="mem-total-msgs">—</div>
+        <div class="mem-stat-lbl">إجمالي الرسائل</div>
+      </div>
+      <div class="mem-stat-box">
+        <div class="mem-stat-num" id="mem-total-users">—</div>
+        <div class="mem-stat-lbl">إجمالي المستخدمين</div>
+      </div>
+      <div class="mem-stat-box" style="grid-column:span 1">
+        <div style="font-size:0.78rem;color:var(--muted);line-height:1.8" id="mem-platforms">—</div>
+        <div class="mem-stat-lbl">توزيع المنصات</div>
+      </div>
+    </div>
+    <div id="mem-users-wrap">
+      <table class="users-table">
+        <thead>
+          <tr>
+            <th>المنصة</th><th>المعرّف</th><th>الاسم</th><th>آخر نشاط</th><th>الرسائل</th>
+          </tr>
+        </thead>
+        <tbody id="mem-users-body">
+          <tr><td colspan="5" style="text-align:center;color:var(--muted);padding:20px">جاري التحميل...</td></tr>
+        </tbody>
+      </table>
     </div>
   </div>
 
@@ -275,9 +316,49 @@
     document.getElementById('send-btn').disabled = false;
   }
 
+  const PLAT_LABELS = { telegram: 'تيليغرام', whatsapp: 'واتساب', web: 'ويب' };
+  const PLAT_CLASS  = { telegram: 'plat-telegram', whatsapp: 'plat-whatsapp', web: 'plat-web' };
+
+  async function loadMemoryStats() {
+    try {
+      const r = await fetch('/api/memory/stats');
+      const d = await r.json();
+      document.getElementById('mem-total-msgs').textContent  = d['إجمالي_الرسائل']  ?? '0';
+      document.getElementById('mem-total-users').textContent = d['إجمالي_المستخدمين'] ?? '0';
+
+      const byPlat = d['رسائل_حسب_المنصة'] || {};
+      const platLines = Object.entries(byPlat)
+        .map(([p, n]) => `${PLAT_LABELS[p] || p}: ${n} رسالة`)
+        .join('\n');
+      document.getElementById('mem-platforms').textContent = platLines || '—';
+
+      const users = d['آخر_المستخدمين'] || [];
+      const tbody = document.getElementById('mem-users-body');
+      if (!users.length) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:20px">لا توجد محادثات مسجّلة بعد.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = users.map(u => {
+        const plat = u.platform || '';
+        const cls  = PLAT_CLASS[plat] || '';
+        const lbl  = PLAT_LABELS[plat] || plat;
+        const last = (u.last_seen || '').replace('T', ' ').slice(0, 16);
+        return `<tr>
+          <td><span class="plat-badge ${cls}">${lbl}</span></td>
+          <td style="color:var(--muted);font-size:0.78rem">${u.user_id || '—'}</td>
+          <td>${u.display_name || '—'}</td>
+          <td style="color:var(--muted);font-size:0.78rem">${last}</td>
+          <td style="font-weight:600">${u.msg_count ?? '—'}</td>
+        </tr>`;
+      }).join('');
+    } catch(e) { console.warn('فشل تحميل إحصائيات الذاكرة', e); }
+  }
+
   loadStatus();
   checkWAStatus();
+  loadMemoryStats();
   setInterval(checkWAStatus, 15000);
+  setInterval(loadMemoryStats, 30000);
 </script>
 </body>
 </html>
