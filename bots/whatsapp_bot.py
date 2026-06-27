@@ -1,6 +1,5 @@
 import io
 import uuid
-import hmac
 import hashlib
 import logging
 import qrcode
@@ -20,8 +19,8 @@ _session_phone: str = ""
 
 
 def _generate_qr_payload(session_id: str) -> str:
-    token = hmac.new(
-        session_id.encode(), b"clavo-whatsapp-session", hashlib.sha256
+    token = hashlib.sha256(
+        (session_id + "clavo-whatsapp-session").encode()
     ).hexdigest()[:16]
     return f"clavo-session:{session_id}:{token}"
 
@@ -96,11 +95,11 @@ def webhook():
     if message_text.lower() == "/personas":
         personas = list_personas()
         active = get_active_persona(PLATFORM, sender)
-        lines = [f"🎭 الشخصيات المتاحة:\n"]
+        lines = ["🎭 الشخصيات المتاحة:\n"]
         for p in personas:
             mark = "✅ " if p["id"] == active.get("id") else ""
             lines.append(f"{mark}{p['avatar']} {p['name']} — {p['description']}")
-        lines.append(f"\nللتبديل: /persona الاسم")
+        lines.append("\nللتبديل: /persona الاسم")
         return jsonify({"رد": "\n".join(lines)})
 
     logger.info("رسالة واتساب من %s: %s", sender, message_text[:60])

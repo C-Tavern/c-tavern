@@ -210,7 +210,7 @@ def handle_shutdown(signum, frame):
     sys.exit(0)
 
 
-def main():
+def initialize_app():
     global _github_observer, _telegram_thread
 
     logger.info("=" * 55)
@@ -236,8 +236,9 @@ def main():
     logger.info("🌐  خادم الويب: http://0.0.0.0:5000")
     logger.info("=" * 55)
 
-    app.run(host="0.0.0.0", port=5000, debug=False, use_reloader=False)
+
+initialize_app()
 
 
 if __name__ == "__main__":
-    main()
+    app.run(host="0.0.0.0", port=5000, debug=False, use_reloader=False)
