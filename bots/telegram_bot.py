@@ -9,10 +9,11 @@ from telegram.ext import (
 )
 from ai.ollama_client import ask_ollama
 from utils.config import TELEGRAM_TOKEN
+from db.memory import get_history, save_message, clear_history, get_user_summary
 
 logger = logging.getLogger(__name__)
 
-user_histories: dict[int, list[dict]] = {}
+PLATFORM = "telegram"
 
 
 async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -24,6 +25,7 @@ async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         "أوامر متاحة:\n"
         "/start — بدء المحادثة\n"
         "/clear — مسح سجل المحادثة\n"
+        "/memory — عرض إحصائيات ذاكرتنا\n"
         "/help — المساعدة"
     )
 
@@ -33,7 +35,7 @@ async def cmd_help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         "🤖 *مساعد كلافو*\n\n"
         "أنا رفيقك الذكي القادر على:\n"
         "• الدردشة والنقاش في أي موضوع\n"
-        "• تذكّر محادثاتنا السابقة\n"
+        "• تذكّر محادثاتنا السابقة حتى بعد إعادة التشغيل 🧠\n"
         "• دعمك عاطفياً ومساعدتك\n"
         "• تمثيل الشخصيات (TavernAI)\n\n"
         "فقط اكتب رسالتك وسأرد عليك! ✨",
@@ -42,30 +44,50 @@ async def cmd_help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 
 async def cmd_clear(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    user_id = update.effective_user.id
-    user_histories.pop(user_id, None)
-    await update.message.reply_text("🗑️ تم مسح سجل المحادثة. لنبدأ من جديد! 😊")
+    user_id = str(update.effective_user.id)
+    deleted = clear_history(PLATFORM, user_id)
+    await update.message.reply_text(
+        f"🗑️ تم مسح {deleted} رسالة من ذاكرتي. لنبدأ من جديد! 😊"
+    )
+
+
+async def cmd_memory(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    user_id = str(update.effective_user.id)
+    summary = get_user_summary(PLATFORM, user_id)
+    if not summary:
+        await update.message.reply_text("🧠 لا توجد ذكريات مسجّلة بعد. ابدأ محادثتنا!")
+        return
+    await update.message.reply_text(
+        f"🧠 *ذاكرتي عنك*\n\n"
+        f"• الاسم: {summary['الاسم']}\n"
+        f"• عدد رسائلك: {summary['عدد_الرسائل']}\n"
+        f"• أول محادثة: {summary['أول_ظهور']}\n"
+        f"• آخر محادثة: {summary['آخر_ظهور']}",
+        parse_mode="Markdown",
+    )
 
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    user_id = update.effective_user.id
+    user = update.effective_user
+    user_id = str(user.id)
     user_text = update.message.text
-
-    if user_id not in user_histories:
-        user_histories[user_id] = []
+    display_name = user.first_name or ""
 
     await context.bot.send_chat_action(
         chat_id=update.effective_chat.id, action="typing"
     )
 
-    logger.info("رسالة واردة من المستخدم %d: %s", user_id, user_text[:50])
-    reply = ask_ollama(user_text, user_histories[user_id])
+    history = get_history(PLATFORM, user_id)
+    logger.info("رسالة تيليغرام من %s (%s): %s", display_name, user_id, user_text[:60])
 
-    user_histories[user_id].append({"role": "user", "content": user_text})
-    user_histories[user_id].append({"role": "assistant", "content": reply})
+    reply = ask_ollama(user_text, history)
 
-    if len(user_histories[user_id]) > 40:
-        user_histories[user_id] = user_histories[user_id][-40:]
+    save_message(PLATFORM, user_id, "user", user_text)
+    save_message(PLATFORM, user_id, "assistant", reply)
+
+    if display_name:
+        from db.memory import upsert_profile
+        upsert_profile(PLATFORM, user_id, display_name)
 
     await update.message.reply_text(reply)
 
@@ -88,6 +110,7 @@ def build_telegram_app():
     app.add_handler(CommandHandler("start", cmd_start))
     app.add_handler(CommandHandler("help", cmd_help))
     app.add_handler(CommandHandler("clear", cmd_clear))
+    app.add_handler(CommandHandler("memory", cmd_memory))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     app.add_error_handler(handle_error)
 
