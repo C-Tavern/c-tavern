@@ -1,0 +1,15 @@
+{
+  "name": "workspace",
+  "version": "1.0.0",
+  "description": "--- layout: default title: Clavo - 你的专属 AI 情感伴侣 | 微信、Telegram、WhatsApp 跨平台酒馆 (TavernAI) 角色扮演机器人 description: Clavo 致力于提供有温度的 AI 情感陪伴。无论你是在寻找虚拟女友、二次元角色扮演 AI，还是直接在通讯软件里运行的 AI 酒馆，Clavo 都能满足你。支持微信、Telegram、WhatsApp 接入。 ---",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "marked": "^18.0.5"
+  }
+}
