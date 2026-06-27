@@ -1,22 +1,19 @@
-import os
 import io
-import json
 import uuid
 import hmac
 import hashlib
 import logging
-import threading
-import time
 import qrcode
 from flask import Blueprint, request, jsonify, send_file, abort
 from ai.ollama_client import ask_ollama
+from db.memory import get_history, save_message, clear_history, get_user_summary
 
 logger = logging.getLogger(__name__)
 
+PLATFORM = "whatsapp"
+
 whatsapp_bp = Blueprint("whatsapp", __name__, url_prefix="/whatsapp")
 
-session_store: dict[str, dict] = {}
-user_histories: dict[str, list[dict]] = {}
 _qr_session_id: str = str(uuid.uuid4())
 _session_connected: bool = False
 _session_phone: str = ""
@@ -48,7 +45,6 @@ def generate_qr_image(session_id: str) -> io.BytesIO:
 
 @whatsapp_bp.route("/qr", methods=["GET"])
 def get_qr():
-    global _qr_session_id
     if _session_connected:
         return jsonify({
             "حالة": "متصل",
@@ -75,7 +71,6 @@ def connect_session():
     provided_id = data.get("session_id", "")
     phone = data.get("phone", "")
 
-    expected = _generate_qr_payload(_qr_session_id)
     if provided_id != _qr_session_id:
         abort(403, description="معرّف الجلسة غير صالح.")
 
@@ -114,13 +109,11 @@ def webhook():
 
     logger.info("رسالة واتساب من %s: %s", sender, message_text[:60])
 
-    history = user_histories.setdefault(sender, [])
+    history = get_history(PLATFORM, sender)
     reply = ask_ollama(message_text, history)
 
-    history.append({"role": "user", "content": message_text})
-    history.append({"role": "assistant", "content": reply})
-    if len(history) > 40:
-        user_histories[sender] = history[-40:]
+    save_message(PLATFORM, sender, "user", message_text)
+    save_message(PLATFORM, sender, "assistant", reply)
 
     return jsonify({"رد": reply, "إلى": sender})
 
@@ -133,11 +126,21 @@ def send_message():
     if not to or not text:
         return jsonify({"خطأ": "يجب تحديد المستلم والرسالة."}), 400
     logger.info("إرسال رسالة واتساب إلى %s", to)
-    return jsonify({
-        "حالة": "تم الإرسال",
-        "إلى": to,
-        "رسالة": text,
-    })
+    return jsonify({"حالة": "تم الإرسال", "إلى": to, "رسالة": text})
+
+
+@whatsapp_bp.route("/user/<user_id>/memory", methods=["GET"])
+def user_memory(user_id: str):
+    summary = get_user_summary(PLATFORM, user_id)
+    if not summary:
+        return jsonify({"رسالة": "لا توجد بيانات لهذا المستخدم."}), 404
+    return jsonify(summary)
+
+
+@whatsapp_bp.route("/user/<user_id>/clear", methods=["POST"])
+def user_clear(user_id: str):
+    deleted = clear_history(PLATFORM, user_id)
+    return jsonify({"حالة": "تم المسح", "عدد_المحذوف": deleted})
 
 
 def get_whatsapp_blueprint() -> Blueprint:
