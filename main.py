@@ -6,6 +6,7 @@
 - خادم Flask (لوحة التحكم + ربط واتساب) على المنفذ 5000
 - بوت تيليغرام في خيط خلفي منفصل
 - مراقب الملفات لمزامنة GitHub تلقائياً
+- نظام الذاكرة طويلة الأمد (SQLite)
 """
 
 import asyncio
@@ -20,6 +21,7 @@ from ai.ollama_client import ask_ollama
 from bots.telegram_bot import build_telegram_app
 from bots.whatsapp_bot import get_whatsapp_blueprint
 from sync_github import start_sync_watcher, stop_sync_watcher
+from db.memory import init_db, get_history, save_message, clear_history, get_stats
 
 logging.basicConfig(
     level=logging.INFO,
@@ -31,9 +33,10 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__, template_folder="templates")
 app.register_blueprint(get_whatsapp_blueprint())
 
-_chat_histories: dict[str, list[dict]] = {}
 _github_observer = None
 _telegram_thread = None
+
+PLATFORM = "web"
 
 
 @app.route("/")
@@ -46,6 +49,11 @@ def api_status():
     return jsonify(config_summary())
 
 
+@app.route("/api/memory/stats")
+def api_memory_stats():
+    return jsonify(get_stats())
+
+
 @app.route("/api/chat", methods=["POST"])
 def api_chat():
     data = request.get_json(silent=True) or {}
@@ -55,13 +63,11 @@ def api_chat():
     if not message:
         return jsonify({"خطأ": "الرسالة فارغة."}), 400
 
-    history = _chat_histories.setdefault(session_id, [])
+    history = get_history(PLATFORM, session_id)
     reply = ask_ollama(message, history)
 
-    history.append({"role": "user", "content": message})
-    history.append({"role": "assistant", "content": reply})
-    if len(history) > 40:
-        _chat_histories[session_id] = history[-40:]
+    save_message(PLATFORM, session_id, "user", message)
+    save_message(PLATFORM, session_id, "assistant", reply)
 
     return jsonify({"reply": reply, "session_id": session_id})
 
@@ -70,8 +76,8 @@ def api_chat():
 def api_chat_clear():
     data = request.get_json(silent=True) or {}
     session_id = data.get("session_id", "web-default")
-    _chat_histories.pop(session_id, None)
-    return jsonify({"حالة": "تم مسح سجل المحادثة."})
+    deleted = clear_history(PLATFORM, session_id)
+    return jsonify({"حالة": "تم مسح سجل المحادثة.", "عدد_المحذوف": deleted})
 
 
 def run_telegram_bot():
@@ -124,6 +130,8 @@ def main():
     logger.info("=" * 55)
     logger.info("🤖  كلافو — رفيقك الذكي | تشغيل التطبيق")
     logger.info("=" * 55)
+
+    init_db()
 
     missing = validate_config()
     if missing:
